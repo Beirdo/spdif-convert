@@ -118,8 +118,8 @@ localparam WB1_SWIDTH  = 4;
 
 localparam WB2_MASTERS = 2;
 localparam WB2_SLAVES  = 3;
-localparam WB2_DWIDTH  = 16;
-localparam WB2_SWIDTH  = 2;
+localparam WB2_DWIDTH  = 32;
+localparam WB2_SWIDTH  = 4;
 
 
 // Wishbone 0 Master Buses
@@ -306,7 +306,7 @@ assign m_wb0_sel[0] = 4'd1;	// Always selected, only 8bits wide
 // Instantiate DMA Controller (to WB1)
 // -------------------------------------------------------------
 
-wb_dma_top #( 4'h1, // register file address
+wb_dma_top #( 4'h0, // register file address
               2'h0, // Number of priorities (1)
               8, // Number of channels
               4'hf, // Channel 0 Configuration:
@@ -390,7 +390,7 @@ u_dma_wb1 (
 // Instantiate DMA Controller (to WB2)
 // -------------------------------------------------------------
 
-wb_dma_top #( 4'h2, // register file address
+wb_dma_top #( 4'h1, // register file address
               2'h0, // Number of priorities (1)
               2, // Number of channels
               4'hf, // Channel 0 Configuration:
