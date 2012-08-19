@@ -49,7 +49,7 @@
 module ae18_core (/*AUTOARG*/
    // Outputs
    wb_clk_o, wb_rst_o, iwb_adr_o, iwb_dat_o, iwb_stb_o, iwb_we_o,
-   iwb_sel_o, dwb_adr_o, dwb_dat_o, dwb_stb_o, dwb_we_o,
+   iwb_sel_o, dwb_ext_adr_o, dwb_dat_o, dwb_stb_o, dwb_we_o,
    // Inputs
    iwb_dat_i, iwb_ack_i, dwb_dat_i, dwb_ack_i, int_i, inte_i, clk_i,
    rst_i
@@ -73,7 +73,13 @@ module ae18_core (/*AUTOARG*/
    input 	     iwb_ack_i;
 
    // Data WB Bus
-   output [DSIZ-1:0] dwb_adr_o;
+   output [31:0]     dwb_ext_adr_o;
+   wire   [15:0]     dwb_adr_o;
+
+   assign dwb_ext_adr_o[31:28]    = dwb_adr_o[15:12];
+   assign dwb_ext_adr_o[27:DSIZ]  = 0;
+   assign dwb_ext_adr_o[DSIZ-1:0] = dwb_adr_o[DSIZ-1:0];
+
    output [7:0]      dwb_dat_o;
    output 	     dwb_stb_o, dwb_we_o;
    input [7:0] 	     dwb_dat_i;
