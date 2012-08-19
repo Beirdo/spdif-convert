@@ -94,12 +94,6 @@
 module wb_dma_ch_pri_enc(clk, valid,
 		pri0, pri1, pri2, pri3,
 		pri4, pri5, pri6, pri7,
-		pri8, pri9, pri10, pri11,
-		pri12, pri13, pri14, pri15,
-		pri16, pri17, pri18, pri19,
-		pri20, pri21, pri22, pri23,
-		pri24, pri25, pri26, pri27,
-		pri28, pri29, pri30,
 		pri_out);
 
 ////////////////////////////////////////////////////////////////////
@@ -117,29 +111,6 @@ parameter	[3:0]	ch4_conf = 4'h0;
 parameter	[3:0]	ch5_conf = 4'h0;
 parameter	[3:0]	ch6_conf = 4'h0;
 parameter	[3:0]	ch7_conf = 4'h0;
-parameter	[3:0]	ch8_conf = 4'h0;
-parameter	[3:0]	ch9_conf = 4'h0;
-parameter	[3:0]	ch10_conf = 4'h0;
-parameter	[3:0]	ch11_conf = 4'h0;
-parameter	[3:0]	ch12_conf = 4'h0;
-parameter	[3:0]	ch13_conf = 4'h0;
-parameter	[3:0]	ch14_conf = 4'h0;
-parameter	[3:0]	ch15_conf = 4'h0;
-parameter	[3:0]	ch16_conf = 4'h0;
-parameter	[3:0]	ch17_conf = 4'h0;
-parameter	[3:0]	ch18_conf = 4'h0;
-parameter	[3:0]	ch19_conf = 4'h0;
-parameter	[3:0]	ch20_conf = 4'h0;
-parameter	[3:0]	ch21_conf = 4'h0;
-parameter	[3:0]	ch22_conf = 4'h0;
-parameter	[3:0]	ch23_conf = 4'h0;
-parameter	[3:0]	ch24_conf = 4'h0;
-parameter	[3:0]	ch25_conf = 4'h0;
-parameter	[3:0]	ch26_conf = 4'h0;
-parameter	[3:0]	ch27_conf = 4'h0;
-parameter	[3:0]	ch28_conf = 4'h0;
-parameter	[3:0]	ch29_conf = 4'h0;
-parameter	[3:0]	ch30_conf = 4'h0;
 
 ////////////////////////////////////////////////////////////////////
 //
@@ -147,25 +118,13 @@ parameter	[3:0]	ch30_conf = 4'h0;
 //
 
 input		clk;
-input	[30:0]	valid;				// Channel Valid bits
+input	[7:0]	valid;				// Channel Valid bits
 input	[2:0]	pri0, pri1, pri2, pri3;		// Channel Priorities
 input	[2:0]	pri4, pri5, pri6, pri7;
-input	[2:0]	pri8, pri9, pri10, pri11;
-input	[2:0]	pri12, pri13, pri14, pri15;
-input	[2:0]	pri16, pri17, pri18, pri19;
-input	[2:0]	pri20, pri21, pri22, pri23;
-input	[2:0]	pri24, pri25, pri26, pri27;
-input	[2:0]	pri28, pri29, pri30;
 output	[2:0]	pri_out;			// Highest unserviced priority
 
 wire	[7:0]	pri0_out, pri1_out, pri2_out, pri3_out;
 wire	[7:0]	pri4_out, pri5_out, pri6_out, pri7_out;
-wire	[7:0]	pri8_out, pri9_out, pri10_out, pri11_out;
-wire	[7:0]	pri12_out, pri13_out, pri14_out, pri15_out;
-wire	[7:0]	pri16_out, pri17_out, pri18_out, pri19_out;
-wire	[7:0]	pri20_out, pri21_out, pri22_out, pri23_out;
-wire	[7:0]	pri24_out, pri25_out, pri26_out, pri27_out;
-wire	[7:0]	pri28_out, pri29_out, pri30_out;
 
 wire	[7:0]	pri_out_tmp;
 reg	[2:0]	pri_out;
@@ -213,130 +172,9 @@ wb_dma_pri_enc_sub #(ch7_conf,pri_sel) u7(
 		.pri_in(	pri7		),
 		.pri_out(	pri7_out	)
 		);
-wb_dma_pri_enc_sub #(ch8_conf,pri_sel) u8(
-		.valid(		valid[8]	),
-		.pri_in(	pri8		),
-		.pri_out(	pri8_out	)
-		);
-wb_dma_pri_enc_sub #(ch9_conf,pri_sel) u9(
-		.valid(		valid[9]	),
-		.pri_in(	pri9		),
-		.pri_out(	pri9_out	)
-		);
-wb_dma_pri_enc_sub #(ch10_conf,pri_sel) u10(
-		.valid(		valid[10]	),
-		.pri_in(	pri10		),
-		.pri_out(	pri10_out	)
-		);
-wb_dma_pri_enc_sub #(ch11_conf,pri_sel) u11(
-		.valid(		valid[11]	),
-		.pri_in(	pri11		),
-		.pri_out(	pri11_out	)
-		);
-wb_dma_pri_enc_sub #(ch12_conf,pri_sel) u12(
-		.valid(		valid[12]	),
-		.pri_in(	pri12		),
-		.pri_out(	pri12_out	)
-		);
-wb_dma_pri_enc_sub #(ch13_conf,pri_sel) u13(
-		.valid(		valid[13]	),
-		.pri_in(	pri13		),
-		.pri_out(	pri13_out	)
-		);
-wb_dma_pri_enc_sub #(ch14_conf,pri_sel) u14(
-		.valid(		valid[14]	),
-		.pri_in(	pri14		),
-		.pri_out(	pri14_out	)
-		);
-wb_dma_pri_enc_sub #(ch15_conf,pri_sel) u15(
-		.valid(		valid[15]	),
-		.pri_in(	pri15		),
-		.pri_out(	pri15_out	)
-		);
-wb_dma_pri_enc_sub #(ch16_conf,pri_sel) u16(
-		.valid(		valid[16]	),
-		.pri_in(	pri16		),
-		.pri_out(	pri16_out	)
-		);
-wb_dma_pri_enc_sub #(ch17_conf,pri_sel) u17(
-		.valid(		valid[17]	),
-		.pri_in(	pri17		),
-		.pri_out(	pri17_out	)
-		);
-wb_dma_pri_enc_sub #(ch18_conf,pri_sel) u18(
-		.valid(		valid[18]	),
-		.pri_in(	pri18		),
-		.pri_out(	pri18_out	)
-		);
-wb_dma_pri_enc_sub #(ch19_conf,pri_sel) u19(
-		.valid(		valid[19]	),
-		.pri_in(	pri19		),
-		.pri_out(	pri19_out	)
-		);
-wb_dma_pri_enc_sub #(ch20_conf,pri_sel) u20(
-		.valid(		valid[20]	),
-		.pri_in(	pri20		),
-		.pri_out(	pri20_out	)
-		);
-wb_dma_pri_enc_sub #(ch21_conf,pri_sel) u21(
-		.valid(		valid[21]	),
-		.pri_in(	pri21		),
-		.pri_out(	pri21_out	)
-		);
-wb_dma_pri_enc_sub #(ch22_conf,pri_sel) u22(
-		.valid(		valid[22]	),
-		.pri_in(	pri22		),
-		.pri_out(	pri22_out	)
-		);
-wb_dma_pri_enc_sub #(ch23_conf,pri_sel) u23(
-		.valid(		valid[23]	),
-		.pri_in(	pri23		),
-		.pri_out(	pri23_out	)
-		);
-wb_dma_pri_enc_sub #(ch24_conf,pri_sel) u24(
-		.valid(		valid[24]	),
-		.pri_in(	pri24		),
-		.pri_out(	pri24_out	)
-		);
-wb_dma_pri_enc_sub #(ch25_conf,pri_sel) u25(
-		.valid(		valid[25]	),
-		.pri_in(	pri25		),
-		.pri_out(	pri25_out	)
-		);
-wb_dma_pri_enc_sub #(ch26_conf,pri_sel) u26(
-		.valid(		valid[26]	),
-		.pri_in(	pri26		),
-		.pri_out(	pri26_out	)
-		);
-wb_dma_pri_enc_sub #(ch27_conf,pri_sel) u27(
-		.valid(		valid[27]	),
-		.pri_in(	pri27		),
-		.pri_out(	pri27_out	)
-		);
-wb_dma_pri_enc_sub #(ch28_conf,pri_sel) u28(
-		.valid(		valid[28]	),
-		.pri_in(	pri28		),
-		.pri_out(	pri28_out	)
-		);
-wb_dma_pri_enc_sub #(ch29_conf,pri_sel) u29(
-		.valid(		valid[29]	),
-		.pri_in(	pri29		),
-		.pri_out(	pri29_out	)
-		);
-wb_dma_pri_enc_sub #(ch30_conf,pri_sel) u30(
-		.valid(		valid[30]	),
-		.pri_in(	pri30		),
-		.pri_out(	pri30_out	)
-		);
 
 assign pri_out_tmp =	pri0_out | pri1_out | pri2_out | pri3_out |
-			pri4_out | pri5_out | pri6_out | pri7_out |
-			pri8_out | pri9_out | pri10_out | pri11_out |
-			pri12_out | pri13_out | pri14_out | pri15_out |
-			pri16_out | pri17_out | pri18_out | pri19_out |
-			pri20_out | pri21_out | pri22_out | pri23_out |
-			pri24_out | pri25_out | pri26_out | pri27_out |
-			pri28_out | pri29_out | pri30_out;
+			pri4_out | pri5_out | pri6_out | pri7_out;
 
 // 8 Priority Levels
 always @(posedge clk)

@@ -108,7 +108,7 @@ module wb_dma_ch_rf(	clk, rst,
 
 		);
 
-parameter	[4:0]	CH_NO    = 5'h0;  // This Instances Channel ID
+parameter	[3:0]	CH_NO    = 3'h0;  // This Instances Channel ID
 parameter	[0:0]	CH_EN    = 1'b1;  // This channel exists
 parameter	[0:0]	HAVE_ARS = 1'b1;  // 1=this Instance Supports ARS
 parameter	[0:0]	HAVE_ED  = 1'b1;  // 1=this Instance Supports External Descriptors
@@ -134,7 +134,7 @@ input	[7:0]	wb_rf_adr;
 input		wb_rf_we;
 input		wb_rf_re;
 
-input	[4:0]	ch_sel;
+input	[2:0]	ch_sel;
 input		ndnr;
 
 // DMA Engine Status
@@ -219,7 +219,7 @@ assign pointer		= CH_EN ? {pointer_r, 3'h0, ptr_valid} : 32'h0;
 assign pointer_s	= CH_EN ? {pointer_sr, 4'h0}  : 32'h0;
 assign ch_csr		= CH_EN ? {9'h0, int_src_r, ch_csr_r3, rest_en, ch_csr_r2,
 					ch_err, ch_done, ch_busy, 1'b0, ch_csr_r[8:1], ch_enable} : 32'h0;
-assign ch_txsz		= CH_EN ? {5'h0, ch_chk_sz_r, ch_sz_inf, 3'h0, ch_tot_sz_r} : 32'h0;
+assign ch_txsz		= CH_EN ? {3'h0, ch_chk_sz_r, ch_sz_inf, 3'h0, ch_tot_sz_r} : 32'h0;
 
 assign ch_enable	= CH_EN ? (ch_csr_r[`WDMA_CH_EN] & (HAVE_CBUF ? !ch_dis : 1'b1) ) : 1'b0;
 
@@ -228,7 +228,7 @@ assign ch_enable	= CH_EN ? (ch_csr_r[`WDMA_CH_EN] & (HAVE_CBUF ? !ch_dis : 1'b1)
 // CH0 control signals
 //
 
-parameter	[4:0]	CH_ADR = CH_NO + 5'h1;
+parameter	[2:0]	CH_ADR = CH_NO + 3'h1;
 
 assign ch_csr_we	= CH_EN & wb_rf_we & (wb_rf_adr[7:3] == CH_ADR) & (wb_rf_adr[2:0] == 3'h0);
 assign ch_csr_re	= CH_EN & wb_rf_re & (wb_rf_adr[7:3] == CH_ADR) & (wb_rf_adr[2:0] == 3'h0);
@@ -552,7 +552,7 @@ input	[7:0]	wb_rf_adr;
 input		wb_rf_we;
 input		wb_rf_re;
 
-input	[4:0]	ch_sel;
+input	[2:0]	ch_sel;
 input		ndnr;
 
 // DMA Engine Status
