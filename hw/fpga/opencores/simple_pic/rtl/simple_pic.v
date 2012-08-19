@@ -111,12 +111,30 @@
 `include "timescale.v"
 // synopsys translate_on
 
+// ========================================================
+// Log 2
+// ========================================================
+
+function [31:0] log2;
+input    [31:0] num;
+integer i;
+
+begin
+  log2 = 32'd0;
+  for (i=0; i<30; i=i+1)
+    if ((2**i > num) && (log2 == 0))
+      log2 = i-1;
+end
+endfunction
+
 module simple_pic(
   clk_i, rst_i, cyc_i, stb_i, adr_i, we_i, dat_i, dat_o, ack_o, int_o,
   irq
 );
 
-  parameter is = 8;            // Number of interrupt sources
+  parameter is = 16;            // Number of interrupt sources
+  localparam banks = is >> 3;
+  localparam ADDR_WIDTH = log2(banks) + 2;
 
   //
   // Inputs & outputs
@@ -127,48 +145,53 @@ module simple_pic(
   input         rst_i;         // reset (asynchronous active low)
   input         cyc_i;         // cycle
   input         stb_i;         // strobe  (cycle and strobe are the same signal)
-  input  [ 2:1] adr_i;         // address
+  input  [ADDR_WIDTH-1:0] adr_i;  // address
   input         we_i;          // write enable
   input  [ 7:0] dat_i;         // data output
   output [ 7:0] dat_o;         // data input
   output        ack_o;         // normal bus termination
 
-  output        int_o;         // interrupt output
+  output [banks-1:0]  int_o;         // interrupt output
 
   //
   // Interrupt sources
   //
-  input  [is:1] irq;           // interrupt request inputs
+  input  [is-1:0] irq;           // interrupt request inputs
 
+  wire [7:0] irqs [banks-1:0];
+
+  genvar j; 
+  for (j=0; j<banks; j=j+1)
+  begin : irqsplit
+    assign irqs[j] = irq[8*j+7:8*j];
+  end
 
   //
   //  Module body
   //
-  reg  [is:1] pol, edgen, pending, mask;   // register bank
-  reg  [is:1] lirq, dirq;                  // latched irqs, delayed latched irqs
+  reg  [7:0] pol [banks-1:0],
+             edgen[banks-1:0],
+             pending[banks-1:0],
+             mask[banks-1:0];     // register bank
+  reg  [7:0] lirq[banks-1:0],
+             dirq[banks-1:0];     // latched irqs, delayed latched irqs
 
+  integer i;
+  integer irqbank;
 
-  //
-  // perform parameter checks
-  //
-  // synopsys translate_off
-  initial
+  always @(adr_i[ADDR_WIDTH-1:2])
+    irqbank = adr_i[ADDR_WIDTH-1:2];
+
+  always @(posedge clk_i)
   begin
-      if(is > 8)
-        $display("simple_pic: max. 8 interrupt sources supported.");
+    for (i=0;i<banks;i=i+1)
+    begin
+      // latch interrupt inputs
+      lirq[i] <= #1 irqs[i];
+      // generate delayed latched irqs
+      dirq[i] <= lirq[i];
+    end
   end
-  // synopsys translate_on
-
-  //
-  // latch interrupt inputs
-  always @(posedge clk_i)
-    lirq <= #1 irq;
-
-  //
-  // generate delayed latched irqs
-  always @(posedge clk_i)
-    dirq <= #1 lirq;
-
 
   //
   // generate actual triggers
@@ -184,64 +207,90 @@ module simple_pic(
   end
   endfunction
 
-  reg  [is:1] irq_event;
+  reg  [7:0] irq_event [banks-1:0];
   integer n;
   always @(posedge clk_i)
-    for(n=1; n<=is; n=n+1)
-      irq_event[n] <= #1 trigger(edgen[n], pol[n], lirq[n], dirq[n]);
+  begin
+    for(i=0; i<banks; i=i+1)
+    begin    
+      for(n=0; n<8; n=n+1)
+      begin
+        irq_event[i][n] <= #1 trigger(edgen[i][n], pol[i][n], lirq[i][n],
+                                      dirq[i][n]);
+      end
+    end
+  end
 
   //
   // generate wishbone register bank writes
   wire wb_acc = cyc_i & stb_i;                   // WISHBONE access
   wire wb_wr  = wb_acc & we_i;                   // WISHBONE write access
 
-  always @(posedge clk_i or negedge rst_i)
-    if (~rst_i)
-      begin
-          pol   <= #1 {{is}{1'b0}};              // clear polarity register
-          edgen <= #1 {{is}{1'b0}};              // clear edge enable register
-          mask  <= #1 {{is}{1'b1}};              // mask all interrupts
-      end
-    else if(wb_wr)                               // wishbone write cycle??
-      case (adr_i) // synopsys full_case parallel_case
-        2'b00: edgen <= #1 dat_i[is-1:0];        // EDGE-ENABLE register
-        2'b01: pol   <= #1 dat_i[is-1:0];        // POLARITY register
-        2'b10: mask  <= #1 dat_i[is-1:0];        // MASK register
-        2'b11: ;                                 // PENDING register is a special case (see below)
-      endcase
-
-
-    // pending register is a special case
-    always @(posedge clk_i or negedge rst_i)
+  always @(posedge clk_i)
+  begin
+    for (i=0; i<banks; i=i+1)
+    begin
       if (~rst_i)
-          pending <= #1 {{is}{1'b0}};            // clear all pending interrupts
-      else if ( wb_wr & (&adr_i) )
-          pending <= #1 (pending & ~dat_i[is-1:0]) | irq_event;
+      begin
+        pol[i]   <= #1 8'b0;              // clear polarity register
+        edgen[i] <= #1 8'b0;              // clear edge enable register
+        mask[i]  <= #1 8'b1;              // mask all interrupts
+      end
+      else if(wb_wr && i == irqbank) // wishbone write cycle??
+        case (adr_i[1:0]) // synopsys full_case parallel_case
+          2'b00: edgen[i] <= #1 dat_i; // EDGE-ENABLE register
+          2'b01: pol[i]   <= #1 dat_i; // POLARITY register
+          2'b10: mask[i]  <= #1 dat_i; // MASK register
+          2'b11: ;             // PENDING register is a special case (see below)
+        endcase
+    end
+  end
+
+  // pending register is a special case
+  always @(posedge clk_i)
+  begin
+    for (i=0; i<banks; i=i+1)
+    begin
+      if (~rst_i)
+        pending[i] <= #1 8'b0;            // clear all pending interrupts
+      else if ( wb_wr & (&adr_i[1:0]) )
+        pending[i] <= #1 (pending[i] & ~dat_i) | irq_event[i];
       else
-          pending <= #1 pending | irq_event;
+        pending[i] <= #1 pending[i] | irq_event[i];
+    end
+  end
 
-    //
-    // generate dat_o
-    reg [7:0] dat_o;
-    always @(posedge clk_i)
-      case (adr_i) // synopsys full_case parallel_case
-        2'b00: dat_o <= #1 { {{8-is}{1'b0}}, edgen};
-        2'b01: dat_o <= #1 { {{8-is}{1'b0}}, pol};
-        2'b10: dat_o <= #1 { {{8-is}{1'b0}}, mask};
-        2'b11: dat_o <= #1 { {{8-is}{1'b0}}, pending};
-      endcase
+  //
+  // generate dat_o
+  reg [7:0] dat_o;
+  always @(posedge clk_i)
+  begin
+    for (i=0; i<banks; i=i+1)
+    begin
+      if (i == irqbank)
+        case (adr_i[1:0])
+          3'b00: dat_o <= #1 edgen[i];
+          3'b01: dat_o <= #1 pol[i];
+          3'b10: dat_o <= #1 mask[i];
+          3'b11: dat_o <= #1 pending[i];
+        endcase
+    end
+  end
 
-   //
-   // generate ack_o
-   reg ack_o;
-   always @(posedge clk_i)
-     ack_o <= #1 wb_acc & !ack_o;
+  //
+  // generate ack_o
+  reg ack_o;
+  always @(posedge clk_i)
+    ack_o <= #1 wb_acc & !ack_o;
 
   //
   // generate CPU interrupt signal
-  reg int_o;
+  reg [1:0] int_o;
   always @(posedge clk_i)
-    int_o <= #1 |(pending & ~mask);
+    for (i=0;i<banks;i=i+1)
+    begin
+      int_o[i] <= #1 |(pending[i] & ~mask[i]);
+    end
 
 endmodule
 
