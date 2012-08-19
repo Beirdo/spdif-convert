@@ -101,11 +101,11 @@ sub slave_init {
   $slave[$slaves]{"baseadr"}="00000000";
   $slave[$slaves]{"size"}="00100000";
   $slave[$slaves]{"baseadr1"}="00000000";
-  $slave[$slaves]{"size1"}="ffffffff";
+  $slave[$slaves]{"size1"}="0";
   $slave[$slaves]{"baseadr2"}="00000000";
-  $slave[$slaves]{"size2"}="ffffffff";
+  $slave[$slaves]{"size2"}="0";
   $slave[$slaves]{"baseadr3"}="00000000";
-  $slave[$slaves]{"size3"}="ffffffff";
+  $slave[$slaves]{"size3"}="0";
 };
 
 sub read_defines {
@@ -138,7 +138,7 @@ while($a = <FILE>)
   if ($a =~ /^(interconnect)( *)(=)( *)(crossbarswitch|sharedbus)(;?)$/) {
     $interconnect = $5; };
 
-  if ($a =~ /^(signal_groups)( *)(=)( *)([0-1])(;?)($*)/) {
+  if ($a =~ /^(signal_groups)( *)(=)( *)([0-1])(;?)$/) {
     $signal_groups = $5; };
 
   if ($a =~ /^(mux_type)( *)(=)( *)(mux|andor|tristate)(;?)$/) {
@@ -147,7 +147,7 @@ while($a = <FILE>)
   if ($a =~ /^(optimize)( *)(=)( *)(speed|area);?$/) {
     $optimize = $5; };
 
-  if ($a =~ /^(dat_size|adr_size|tgd_bits|tga_bits|tgc_bits)( *)(=)( *)([0-9]+)(;?)($*)/) {
+  if ($a =~ /^(dat_size|adr_size|tgd_bits|tga_bits|tgc_bits)( *)(=)( *)([0-9]+)(;?)$/) {
     if ($1 eq "dat_size"){$dat_size = $5};
     if ($1 eq "adr_size"){$adr_size = $5};
     if ($1 eq "tgd_bits"){$tgd_bits = $5};
@@ -155,61 +155,61 @@ while($a = <FILE>)
     if ($1 eq "tgc_bits"){$tgc_bits = $5};
   };
 
-  if ($a =~ /^(rename)(_)(tga|tgc|tgd)( *)(=)( *)([a-zA-Z_-]+)(;?)($*)/) {
+  if ($a =~ /^(rename)(_)(tga|tgc|tgd)( *)(=)( *)([a-zA-Z_-]+)(;?)$/) {
     if ($3 eq "tga"){$rename_tga=$7};
     if ($3 eq "tgc"){$rename_tgc=$7};
     if ($3 eq "tgd"){$rename_tgd=$7};
   };
 
   # master port setup
-  if ($a =~ /^(master)( *)([A-Za-z0-9_-]+)($*)/) {
+  if ($a =~ /^(master)( *)([A-Za-z0-9_-]+)$/) {
     if($1 eq "master") {
       master_init($3);
     };
     $a = <FILE>;
-    until ($a =~ /^(end master)($*)/) {
-      if ($a =~ /^( *)(dat_size|adr_o_hi|adr_o_lo|lock_o|err_i|rty_i|tga_o|tgc_o|priority)( *)(=)( *)(0x)?([0-9a-fA-F]*)(;?)($*)/) {
+    until ($a =~ /^(end master)/) {
+      if ($a =~ /^( *)(dat_size|adr_o_hi|adr_o_lo|lock_o|err_i|rty_i|tga_o|tgc_o|priority)( *)(=)( *)(0x)?([0-9a-fA-F]*)(;?)$/) {
         $master[$masters]{"$2"}=$7;
-        if (($2 eq "rty_i") && ($7 eq 1)) {
+        if (($2 eq "rty_i") && ($7 == 1)) {
           $rty_i++; };
-        if (($2 eq "err_i") && ($7 eq 1)) {
+        if (($2 eq "err_i") && ($7 == 1)) {
           $err_i++; };
-        if (($2 eq "tgc_o") && ($7 eq 1)) {
+        if (($2 eq "tgc_o") && ($7 == 1)) {
           $tgc_o++; };
-        if (($2 eq "tga_o") && ($7 eq 1)) {
+        if (($2 eq "tga_o") && ($7 == 1)) {
           $tga_o++; };
 	# priority for shared bus system
 	if ($2 eq "priority") {
           $priority += $7; };
       }; #end if
-      if ($a =~ /^( *)(type)( *)(=)( *)(ro|wo|rw)(;?)($*)/) {
+      if ($a =~ /^( *)(type)( *)(=)( *)(ro|wo|rw)(;?)$/) {
         $master[$masters]{"$2"}=$6; };
       # priority for crossbarswitch
-      if ($a =~ /^( *)(priority)(_)([0-9a-zA-Z_]*)( *)(=)( *)([0-9]*)(;?)($*)/) {
+      if ($a =~ /^( *)(priority)(_)([0-9a-zA-Z_]*)( *)(=)( *)([0-9]*)(;?)$/) {
         $master[$masters]{("priority_"."$4")}=$8; };
       $a = <FILE>;
     };
   };
 
   # slave port setup
-  if ($a =~ /^(slave)( *)([A-Za-z0-9_-]+)($*)/) {
+  if ($a =~ /^(slave)( *)([A-Za-z0-9_-]+)$/) {
     if ($1 eq "slave") {
       slave_init($3);
     };
     $a = <FILE>;
-    until ($a =~ /^(end slave)($*)/) {
-      if ($a =~ /^( *)(dat_i|dat_o|sel_i|adr_i_hi|adr_i_lo|lock_i|tga_i|tgc_i|err_o|rty_o|baseadr|size|baseadr1|size1|baseadr2|size2|baseadr3|size3)( *)(=)( *)(0x)?([0-9a-fA-F]+)(;?)($*)/) {
+    until ($a =~ /^(end slave)/) {
+      if ($a =~ /^( *)(dat_i|dat_o|sel_i|adr_i_hi|adr_i_lo|lock_i|tga_i|tgc_i|err_o|rty_o|baseadr|size|baseadr1|size1|baseadr2|size2|baseadr3|size3)( *)(=)( *)(0x)?([0-9a-fA-F]+)(;?)$/) {
         $slave[$slaves]{"$2"}=$7;
-        if (($2 eq "rty_o") && ($7 eq 1)) {
+        if (($2 eq "rty_o") && ($7 == 1)) {
           $rty_o++; };
-        if (($2 eq "err_o") && ($7 eq 1)) {
+        if (($2 eq "err_o") && ($7 == 1)) {
           $err_o++; };
-        if (($2 eq "tgc_i") && ($7 eq 1)) {
+        if (($2 eq "tgc_i") && ($7 == 1)) {
           $tgc_i++; };
-        if (($2 eq "tga_i") && ($7 eq 1)) {
+        if (($2 eq "tga_i") && ($7 == 1)) {
           $tga_i++; };
       }; #end if
-      if ($a =~ /^( *)(type)( *)(=)( *)(ro|wo|rw)(;?)($*)/) {
+      if ($a =~ /^( *)(type)( *)(=)( *)(ro|wo|rw)(;?)$/) {
         $slave[$slaves]{"$2"}=$6; };
       $a = <FILE>;
     };
@@ -556,7 +556,7 @@ sub WinPrioshb {
   $mw = MainWindow->new;
   $mw->title ("Wishbone generator");
   $frame=$mw->Frame(-label=>"Priority for shared bus system")->pack();
-  for ($i=1; $i le $masters; $i++) {
+  for ($i=1; $i <= $masters; $i++) {
     $frame=$mw->Frame();
     $frame->pack(-side => 'top', -fill => 'y', -expand => 'y');
     $frame->Label(-text => $master[$i]{"wbm"})->pack(-side=>'left');
@@ -579,15 +579,15 @@ sub WinPriocbs {
   $frame=$mw->Frame();
   $frame->pack(-side => 'top', -fill => 'x', -expand => 'y');
   $frame->Entry(-textvariable => \$tmp)->pack(-side=>'left');
-  for ($j=1; $j le $slaves; $j++) {
+  for ($j=1; $j <= $slaves; $j++) {
     $frame->Entry(-textvariable => \$slave[$j]{"wbs"})->pack(-side=>'left');
   };
-  for ($i=1; $i le $masters; $i++) {
+  for ($i=1; $i <= $masters; $i++) {
     $frame=$mw->Frame();
     $frame->pack(-side => 'top', -fill => 'x', -expand => 'y');
     #$frame->Label(-text => $master[$i]{"wbm"})->pack(-side=>'left');
     $frame->Entry(-textvariable => \$master[$i]{"wbm"})->pack(-side=>'left');
-    for ($j=1; $j le $slaves; $j++) {
+    for ($j=1; $j <= $slaves; $j++) {
       #$frame->Label(-text => $master[$i]{"priority_".($slave[$j]{"wbs"})})->pack(-side=>'left');
       $frame->Entry(-textvariable => \$master[$i]{"priority_".($slave[$j]{"wbs"})})->pack(-side=>'left');
     };
@@ -604,7 +604,7 @@ sub WinPriocbs {
 sub wbm_del {
   my $i;
   if ($_[0] != $masters) {
-    for ($i=$_[0]; $i lt $masters; $i++) {
+    for ($i=$_[0]; $i < $masters; $i++) {
       $master[$i]=$master[$i+1];
     };
   };
@@ -615,7 +615,7 @@ sub wbm_del {
 sub wbs_del {
   my $i;
   if ($_[0] != $slaves) {
-    for ($i=$_[0]; $i lt $slaves; $i++) {
+    for ($i=$_[0]; $i < $slaves; $i++) {
       $slave[$i]=$slave[$i+1];
     };
   };
@@ -688,7 +688,7 @@ until ($state eq "bye") {
       $i=1;
       $state='WinGlobal';
     } elsif ($next == 1) {
-      if ($i eq $slaves) {
+      if ($i == $slaves) {
         $state='WinPrio';
       } else {
         $i++
@@ -739,9 +739,11 @@ sub generate_defines {
   printf OUTFILE "adr_size=%s\n",$adr_size;
   printf OUTFILE "mux_type=%s\n",$mux_type;
   printf OUTFILE "interconnect=%s\n",$interconnect;
-  for ($i=1; $i le $masters; $i++) {
+  for ($i=1; $i <= $masters; $i++) {
     printf OUTFILE "\nmaster %s\n",$master[$i]{"wbm"};
     printf OUTFILE "  type=%s\n",$master[$i]{"type"};
+    printf OUTFILE "  dat_size=%s\n",$master[$i]{"dat_size"};
+    printf OUTFILE "  adr_size=%s\n",$master[$i]{"adr_size"};
     printf OUTFILE "  lock_o=%s\n",$master[$i]{"lock_o"};
     printf OUTFILE "  tga_o=%s\n",$master[$i]{"tga_o"};
     printf OUTFILE "  tgc_o=%s\n",$master[$i]{"tgc_o"};
@@ -751,15 +753,16 @@ sub generate_defines {
     if ($interconnect eq "sharedbus") {
       printf OUTFILE "  priority=%s\n",$master[$i]{"priority"};
     } else {
-      for ($j=1; $j le $slaves; $j++) {
+      for ($j=1; $j <= $slaves; $j++) {
         printf OUTFILE "  priority_%s=%s\n",$slave[$j]{"wbs"},$master[$i]{"priority_".($slave[$j]{"wbs"})};
       };
     };
     printf OUTFILE "end master %s\n",$master[$i]{"wbm"};
   };
-  for ($i=1; $i le $slaves; $i++) {
+  for ($i=1; $i <= $slaves; $i++) {
     printf OUTFILE "\nslave %s\n",$slave[$i]{"wbs"};
     printf OUTFILE "  type=%s\n",$slave[$i]{"type"};
+    printf OUTFILE "  dat_size=%s\n",$slave[$i]{"dat_size"};
     printf OUTFILE "  adr_i_hi=%s\n",$slave[$i]{"adr_i_hi"};
     printf OUTFILE "  adr_i_lo=%s\n",$slave[$i]{"adr_i_lo"};
     printf OUTFILE "  tga_i=%s\n",$slave[$i]{"tga_i"};
@@ -786,18 +789,18 @@ sub gen_header {
   $tmp=localtime(time);
   printf OUTFILE "%s Generated %s\n%s\n",$comment,$tmp,$comment;
   printf OUTFILE "%s Wishbone masters:\n",$comment;
-  for ($i=1; $i le $masters; $i++) {
+  for ($i=1; $i <= $masters; $i++) {
     printf OUTFILE "%s   %s\n",$comment,$master[$i]{"wbm"}; };
   printf OUTFILE "%s\n%s Wishbone slaves:\n",$comment,$comment;
-  for ($i=1; $i le $slaves; $i++) {
+  for ($i=1; $i <= $slaves; $i++) {
     printf OUTFILE "%s   %s\n",$comment,$slave[$i]{"wbs"};
-    if ($slave[$i]{"size"} ne ffffffff) {
+    if ($slave[$i]{"size"} != 0) {
       printf OUTFILE "%s     baseadr 0x%s - size 0x%s\n",$comment,$slave[$i]{"baseadr"},$slave[$i]{"size"}};
-    if ($slave[$i]{"size1"} ne ffffffff) {
+    if ($slave[$i]{"size1"} != 0) {
       printf OUTFILE "%s     baseadr 0x%s - size 0x%s\n",$comment,$slave[$i]{"baseadr1"},$slave[$i]{"size1"}};
-    if ($slave[$i]{"size2"} ne ffffffff) {
+    if ($slave[$i]{"size2"} != 0) {
       printf OUTFILE "%s     baseadr 0x%s - size 0x%s\n",$comment,$slave[$i]{"baseadr2"},$slave[$i]{"size2"}};
-    if ($slave[$i]{"size3"} ne ffffffff) {
+    if ($slave[$i]{"size3"} != 0) {
       printf OUTFILE "%s     baseadr 0x%s - size 0x%s\n",$comment,$slave[$i]{"baseadr3"},$slave[$i]{"size3"}};
   };
 };
@@ -808,13 +811,13 @@ sub gen_vhdl_package {
   printf OUTFILE "package %s_package is\n\n",$intercon;
 
   # records ?
-  if ($signal_groups eq 1) {
-    for ($i=1; $i le $masters; $i++) {
+  if ($signal_groups == 1) {
+    for ($i=1; $i <= $masters; $i++) {
       # input record
       printf OUTFILE "type %s_wbm_i_type is record\n",$master[$i]{"wbm"};
       if ($master[$i]{"type"} =~ /(ro|rw)/) { printf OUTFILE "  dat_i : std_logic_vector(%s downto 0);\n",$master[$i]{"dat_size"}-1;};
-      if ($master[$i]{"err_i"} eq 1) { printf OUTFILE "  err_i : std_logic;\n";};
-      if ($master[$i]{"rty_i"} eq 1) { printf OUTFILE "  rty_i : std_logic;\n";};
+      if ($master[$i]{"err_i"} == 1) { printf OUTFILE "  err_i : std_logic;\n";};
+      if ($master[$i]{"rty_i"} == 1) { printf OUTFILE "  rty_i : std_logic;\n";};
       printf OUTFILE "  ack_i : std_logic;\n";
       printf OUTFILE "end record;\n";
       # output record
@@ -822,39 +825,39 @@ sub gen_vhdl_package {
       if ($master[$i]{"type"} =~ /(wo|rw)/) {
         printf OUTFILE "  dat_o : std_logic_vector(%s downto 0);\n",$master[$i]{"dat_size"}-1;
         printf OUTFILE "  we_o  : std_logic;\n"; };
-      if ($dat_size eq 8) {
+      if ($dat_size == 8) {
         printf OUTFILE "  sel_o : std_logic;\n";
       } else {
         printf OUTFILE "  sel_o : std_logic_vector(%s downto 0);\n",$dat_size/8-1; };
       printf OUTFILE "  adr_o : std_logic_vector(%s downto 0);\n",$adr_size-1;
-      if ($master[$i]{"lock_o"} eq 1) { printf OUTFILE "  lock_o : std_logic;\n";};
-      if ($master[$i]{"tga_o"} eq 1) { printf OUTFILE "  %s_o : std_logic_vector(%s downto 0);\n",$rename_tga, $tga_bits-1;};
-      if ($master[$i]{"tgc_o"} eq 1) { printf OUTFILE "  %s_o : std_logic_vector(%s downto 0);\n",$rename_tgc, $tgc_bits-1;};
+      if ($master[$i]{"lock_o"} == 1) { printf OUTFILE "  lock_o : std_logic;\n";};
+      if ($master[$i]{"tga_o"} == 1) { printf OUTFILE "  %s_o : std_logic_vector(%s downto 0);\n",$rename_tga, $tga_bits-1;};
+      if ($master[$i]{"tgc_o"} == 1) { printf OUTFILE "  %s_o : std_logic_vector(%s downto 0);\n",$rename_tgc, $tgc_bits-1;};
       printf OUTFILE "  cyc_o : std_logic;\n";
       printf OUTFILE "  stb_o : std_logic;\n";
       printf OUTFILE "end record;\n\n";
     }; #end for
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       # input record
       printf OUTFILE "type %s_wbs_i_type is record\n",$slave[$i]{"wbs"};
       if ($slave[$i]{"type"} ne "ro") {
         printf OUTFILE "  dat_i : std_logic_vector(%s downto 0);\n",$slave[$i]{"dat_size"}-1;
         printf OUTFILE "  we_i  : std_logic;\n"; };
-      if ($dat_size eq 8) {
+      if ($dat_size == 8) {
         printf OUTFILE "  sel_i : std_logic;\n";
       } else {
         printf OUTFILE "  sel_i : std_logic_vector(%s downto 0);\n",$dat_size/8-1; };
-      if ($slave[$i]{"adr_i_hi"} gt 0) { printf OUTFILE "  adr_i : std_logic_vector(%s downto %s);\n",$slave[$i]{"adr_i_hi"},$slave[$i]{"adr_i_lo"};};
-      if ($slave[$i]{"tga_i"} eq 1) { printf OUTFILE "  %s_i : std_logic_vector(%s downto 0);\n",$rename_tga,$tga_bits-1; };
-      if ($slave[$i]{"tgc_i"} eq 1) { printf OUTFILE "  %s_i : std_logic_vector(%s downto 0);\n",$rename_tgc,$tgc_bits-1; };
+      if ($slave[$i]{"adr_i_hi"} > 0) { printf OUTFILE "  adr_i : std_logic_vector(%s downto %s);\n",$slave[$i]{"adr_i_hi"},$slave[$i]{"adr_i_lo"};};
+      if ($slave[$i]{"tga_i"} == 1) { printf OUTFILE "  %s_i : std_logic_vector(%s downto 0);\n",$rename_tga,$tga_bits-1; };
+      if ($slave[$i]{"tgc_i"} == 1) { printf OUTFILE "  %s_i : std_logic_vector(%s downto 0);\n",$rename_tgc,$tgc_bits-1; };
       printf OUTFILE "  cyc_i : std_logic;\n";
       printf OUTFILE "  stb_i : std_logic;\n";
       printf OUTFILE "end record;\n";
       # output record
       printf OUTFILE "type %s_wbs_o_type is record\n",$slave[$i]{"wbs"};
       if ($slave[$i]{"type"} =~ /(ro|rw)/) { printf OUTFILE "  dat_o : std_logic_vector(%s downto 0);\n",$slave[$i]{"dat_size"}-1 };
-      if ($slave[$i]{"rty_o"} eq 1) { printf OUTFILE "  rty_o : std_logic;\n" };
-      if ($slave[$i]{"err_o"} eq 1) { printf OUTFILE "  err_o : std_logic;\n" };
+      if ($slave[$i]{"rty_o"} == 1) { printf OUTFILE "  rty_o : std_logic;\n" };
+      if ($slave[$i]{"err_o"} == 1) { printf OUTFILE "  err_o : std_logic;\n" };
       printf OUTFILE "  ack_o : std_logic;\n";
       printf OUTFILE "end record;\n";
     }; #end for
@@ -1025,17 +1028,17 @@ sub gen_entity {
   # entity intercon
   printf OUTFILE "\nentity %s is\n  port (\n",$intercon;
   # records
-  if ($signal_groups eq 1) {
+  if ($signal_groups == 1) {
     # master port(s)
     printf OUTFILE "  -- wishbone master port(s)\n";
-    for ($i=1; $i le $masters; $i++) {
+    for ($i=1; $i <= $masters; $i++) {
  	    printf OUTFILE "  -- %s\n",$master[$i]{"wbm"};
       printf OUTFILE "  %s_wbm_i : out %s_wbm_i_type;\n",$master[$i]{"wbm"},$master[$i]{"wbm"};
       printf OUTFILE "  %s_wbm_o : in  %s_wbm_o_type;\n",$master[$i]{"wbm"},$master[$i]{"wbm"};
     }; #end for
     # slave port(s)
     printf OUTFILE "  -- wishbone slave port(s)\n";
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       printf OUTFILE "  -- %s\n",$slave[$i]{"wbs"};
       printf OUTFILE "  %s_wbs_i : out %s_wbs_i_type;\n",$slave[$i]{"wbs"},$slave[$i]{"wbs"};
       printf OUTFILE "  %s_wbs_o : in %s_wbs_o_type;\n",$slave[$i]{"wbs"},$slave[$i]{"wbs"};
@@ -1043,49 +1046,49 @@ sub gen_entity {
   # separate signals
   } else {
     printf OUTFILE "  -- wishbone master port(s)\n";
-    for ($i=1; $i le $masters; $i++) {
+    for ($i=1; $i <= $masters; $i++) {
       printf OUTFILE "  -- %s\n",$master[$i]{"wbm"};
       if ($master[$i]{"type"} ne "wo") {
         printf OUTFILE "  %s_dat_i : out std_logic_vector(%s downto 0);\n",$master[$i]{"wbm"},$dat_size-1; };
       printf OUTFILE "  %s_ack_i : out std_logic;\n",$master[$i]{"wbm"};
-      if ($master[$i]{"err_i"} eq 1) {
+      if ($master[$i]{"err_i"} == 1) {
         printf OUTFILE "  %s_err_i : out std_logic;\n",$master[$i]{"wbm"}; };
-      if ($master[$i]{"rty_i"} eq 1) {
+      if ($master[$i]{"rty_i"} == 1) {
         printf OUTFILE "  %s_rty_i : out std_logic;\n",$master[$i]{"wbm"}; };
       if ($master[$i]{"type"} ne "ro") {
         printf OUTFILE "  %s_dat_o : in  std_logic_vector(%s downto 0);\n",$master[$i]{"wbm"},$dat_size-1;
         printf OUTFILE "  %s_we_o  : in  std_logic;\n",$master[$i]{"wbm"};
       };
-      if ($dat_size ge 16) {
+      if ($dat_size >= 16) {
         printf OUTFILE "  %s_sel_o : in  std_logic_vector(%s downto 0);\n",$master[$i]{"wbm"},$dat_size/8-1; };
       printf OUTFILE "  %s_adr_o : in  std_logic_vector(%s downto 0);\n",$master[$i]{"wbm"},$adr_size-1;
-      if ($master[$i]{"tgc_o"} eq 1) {
+      if ($master[$i]{"tgc_o"} == 1) {
         printf OUTFILE "  %s_%s_o : in  std_logic_vector(%s downto 0);\n",$master[$i]{"wbm"},$rename_tgc,$tgc_bits-1; };
-      if ($master[$i]{"tga_o"} eq 1) {
+      if ($master[$i]{"tga_o"} == 1) {
         printf OUTFILE "  %s_%s_o : in  std_logic_vector(%s downto 0);\n",$master[$i]{"wbm"},$rename_tga,$tga_bits-1; };
       printf OUTFILE "  %s_cyc_o : in  std_logic;\n",$master[$i]{"wbm"};
       printf OUTFILE "  %s_stb_o : in  std_logic;\n",$master[$i]{"wbm"};
     };
     printf OUTFILE "  -- wishbone slave port(s)\n";
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       printf OUTFILE "  -- %s\n",$slave[$i]{"wbs"};
       if ($slave[$i]{"type"} ne "wo") {
         printf OUTFILE "  %s_dat_o : in  std_logic_vector(%s downto 0);\n",$slave[$i]{"wbs"},$dat_size-1; };
       printf OUTFILE "  %s_ack_o : in  std_logic;\n",$slave[$i]{"wbs"};
-      if ($slave[$i]{"err_o"} eq 1) {
+      if ($slave[$i]{"err_o"} == 1) {
         printf OUTFILE "  %s_err_o : in  std_logic;\n",$slave[$i]{"wbs"}; };
-      if ($slave[$i]{"rty_o"} eq 1) {
+      if ($slave[$i]{"rty_o"} == 1) {
         printf OUTFILE "  %s_rty_o : in  std_logic;\n",$slave[$i]{"wbs"}; };
       if ($slave[$i]{"type"} ne "ro") {
         printf OUTFILE "  %s_dat_i : out std_logic_vector(%s downto 0);\n",$slave[$i]{"wbs"},$dat_size-1;
         printf OUTFILE "  %s_we_i  : out std_logic;\n",$slave[$i]{"wbs"};
       };
-      if ($dat_size ge 16) {
+      if ($dat_size >= 16) {
         printf OUTFILE "  %s_sel_i : out std_logic_vector(%s downto 0);\n",$slave[$i]{"wbs"},$dat_size/8-1; };
       printf OUTFILE "  %s_adr_i : out std_logic_vector(%s downto %s);\n",$slave[$i]{"wbs"},$slave[$i]{"adr_i_hi"},$slave[$i]{"adr_i_lo"};
-      if ($slave[$i]{"tgc_i"} eq 1) {
+      if ($slave[$i]{"tgc_i"} == 1) {
         printf OUTFILE "  %s_%s_i : out std_logic_vector(%s downto 0);\n",$slave[$i]{"wbs"},$rename_tgc,$tgc_bits-1; };
-      if ($slave[$i]{"tga_i"} eq 1) {
+      if ($slave[$i]{"tga_i"} == 1) {
         printf OUTFILE "  %s_%s_i : out std_logic_vector(%s downto 0);\n",$slave[$i]{"wbs"},$rename_tga,$tga_bits-1; };
       printf OUTFILE "  %s_cyc_i : out std_logic;\n",$slave[$i]{"wbs"};
       printf OUTFILE "  %s_stb_i : out std_logic;\n",$slave[$i]{"wbs"};
@@ -1102,19 +1105,19 @@ sub gen_entity {
 # generate signals for remapping (for records)
 sub gen_sig_remap {
   sub gen_sig_dec {
-    if ($_[1] gt 0) {
+    if ($_[1] > 0) {
       printf OUTFILE "  signal %s : std_logic_vector(%s downto %s);\n",$_[0],$_[1]-1,$_[2];
     } else {
       printf OUTFILE "  signal %s : std_logic;\n",$_[0];
     };
   };
-    for ($i=1; $i le $masters; $i++) {
+    for ($i=1; $i <= $masters; $i++) {
       if ($master[$i]{"type"} ne "wo") {
         gen_sig_dec($master[$i]{"wbm"}.'_dat_i',$dat_size,0); };
       gen_sig_dec($master[$i]{"wbm"}.'_ack_i');
-      if ($master[$i]{"err_i"} eq 1) {
+      if ($master[$i]{"err_i"} == 1) {
         gen_sig_dec($master[$i]{"wbm"}.'_err_i'); };
-      if ($master[$i]{"rty_i"} eq 1) {
+      if ($master[$i]{"rty_i"} == 1) {
         gen_sig_dec($master[$i]{"wbm"}.'_rty_i') };
       if ($master[$i]{"type"} ne "ro") {
         gen_sig_dec($master[$i]{"wbm"}.'_dat_o',$dat_size,0);
@@ -1123,22 +1126,22 @@ sub gen_sig_remap {
       if ($dat_size > 8) {
         gen_sig_dec($master[$i]{"wbm"}.'_sel_o',$dat_size/8,0); };
       gen_sig_dec($master[$i]{"wbm"}.'_adr_o',$adr_size,0);
-      if ($master[$i]{"tga_o"} eq 1) {
+      if ($master[$i]{"tga_o"} == 1) {
         gen_sig_dec($master[$i]{"wbm"}.'_'.$rename_tga.'_o',$tga_bits,0); };
-      if ($master[$i]{"tgc_o"} eq 1) {
+      if ($master[$i]{"tgc_o"} == 1) {
         gen_sig_dec($master[$i]{"wbm"}.'_'.$rename_tgc.'_o',$tgc_bits,0); };
-      if ($master[$i]{"tgd_o"} eq 1) {
+      if ($master[$i]{"tgd_o"} == 1) {
         gen_sig_dec($master[$i]{"wbm"}.'_'.$rename_tgd.'_o',$tgd_bits,0); };
       gen_sig_dec($master[$i]{"wbm"}.'_cyc_o');
       gen_sig_dec($master[$i]{"wbm"}.'_stb_o');
     };
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       if ($slave[$i]{"type"} ne "wo") {
         gen_sig_dec($slave[$i]{"wbs"}.'_dat_o',$dat_size,0); };
       gen_sig_dec($slave[$i]{"wbs"}.'_ack_o');
-      if ($slave[$i]{"err_o"} eq 1) {
+      if ($slave[$i]{"err_o"} == 1) {
         gen_sig_dec($slave[$i]{"wbs"}.'_err_o'); };
-      if ($slave[$i]{"rty_o"} eq 1) {
+      if ($slave[$i]{"rty_o"} == 1) {
         gen_sig_dec($slave[$i]{"wbs"}.'_rty_o'); };
       if ($slave[$i]{"type"} ne "ro") {
         gen_sig_dec($slave[$i]{"wbs"}.'_dat_i',$dat_size,0);
@@ -1147,11 +1150,11 @@ sub gen_sig_remap {
       if ($dat_size > 8) {
         gen_sig_dec($slave[$i]{"wbs"}.'_sel_i',$dat_size/8,0); };
       gen_sig_dec($slave[$i]{"wbs"}.'_adr_i',$slave[$i]{"adr_i_hi"}+1,$slave[$i]{"adr_i_lo"});
-      if ($slave[$i]{"tga_i"} eq 1) {
+      if ($slave[$i]{"tga_i"} == 1) {
         gen_sig_dec($slave[$i]{"wbs"}.'_'.$rename_tga.'_i',$tga_bits,0); };
-      if ($slave[$i]{"tgc_i"} eq 1) {
+      if ($slave[$i]{"tgc_i"} == 1) {
         gen_sig_dec($slave[$i]{"wbs"}.'_'.$rename_tgc.'_i',$tgc_bits,0); };
-      if ($slave[$i]{"tgd_i"} eq 1) {
+      if ($slave[$i]{"tgd_i"} == 1) {
         gen_sig_dec($slave[$i]{"wbs"}.'_'.$rename_tgd.'_i',$tgd_bits,0); };
       gen_sig_dec($slave[$i]{"wbs"}.'_cyc_i');
       gen_sig_dec($slave[$i]{"wbs"}.'_stb_i');
@@ -1160,23 +1163,23 @@ sub gen_sig_remap {
 
 sub gen_global_signals {
   # single master
-  if ($masters eq 1) {
+  if ($masters == 1) {
     # slave select for generation of stb_i to slaves
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       printf OUTFILE "  signal %s_ss : std_logic; -- slave select\n",$slave[$i]{"wbs"}; };
   # shared bus
   } elsif ($interconnect eq "sharedbus") {
     # bus grant
-    for ($i=1; $i le $masters; $i++) {
+    for ($i=1; $i <= $masters; $i++) {
       printf OUTFILE "  signal %s_bg : std_logic; -- bus grant\n",$master[$i]{"wbm"}; };
     # slave select for generation of stb_i to slaves
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       printf OUTFILE "  signal %s_ss : std_logic; -- slave select\n",$slave[$i]{"wbs"}; };
   # crossbarswitch
   } else {
-    for ($i=1; $i le $masters; $i++) {
-      for ($j=1; $j le $slaves; $j++) {
-        if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0) {
+    for ($i=1; $i <= $masters; $i++) {
+      for ($j=1; $j <= $slaves; $j++) {
+        if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0) {
           printf OUTFILE "  signal %s_%s_ss : std_logic; -- slave select\n",$master[$i]{"wbm"},$slave[$j]{"wbs"};
           printf OUTFILE "  signal %s_%s_bg : std_logic; -- bus grant\n",$master[$i]{"wbm"},$slave[$j]{"wbs"};
         };
@@ -1187,25 +1190,25 @@ sub gen_global_signals {
 
 sub gen_arbiter {
   # out: wbm_bg (bus grant)
-  if ($masters eq 1) {
+  if ($masters == 1) {
     # ack_i
     # cyc_i
     # printf OUTFILE "%s_bg <= %s_cyc_o;\n",$master[1]{"wbm"},$master[1]{"wbm"};
   # sharedbus
   } elsif ($interconnect eq "sharedbus") {
     printf OUTFILE "arbiter_sharedbus: block\n";
-    for ($i=1; $i le $masters; $i++) {
+    for ($i=1; $i <= $masters; $i++) {
       printf OUTFILE "  signal %s_bg_1, %s_bg_2, %s_bg_q : std_logic;\n",$master[$i]{"wbm"},$master[$i]{"wbm"},$master[$i]{"wbm"}; };
-    for ($i=1; $i le $masters; $i++) {
+    for ($i=1; $i <= $masters; $i++) {
       printf OUTFILE "  signal %s_trafic_ctrl_limit : std_logic;\n",$master[$i]{"wbm"}; };
     printf OUTFILE "  signal ack, ce, idle :std_logic;\n";
     printf OUTFILE "begin -- arbiter\n";
     printf OUTFILE "ack <= %s_ack_o",$slave[1]{"wbs"};
-    for ($i=2; $i le $slaves; $i++) {
+    for ($i=2; $i <= $slaves; $i++) {
       printf OUTFILE " or %s_ack_o",$slave[$i]{"wbs"}; };
     printf OUTFILE ";\n";
     # instantiate trafic_supervision(s)
-    for ($i=1; $i le $masters; $i++) {
+    for ($i=1; $i <= $masters; $i++) {
       printf OUTFILE "\ntrafic_supervision_%s : entity work.trafic_supervision\n",$i;
       printf OUTFILE "generic map(\n";
       printf OUTFILE "  priority => %s,\n",$master[$i]{"priority"};
@@ -1219,51 +1222,51 @@ sub gen_arbiter {
     # _bg_q
     # bg eq 1 => set
     # end of cycle => reset
-    for ($i=1; $i le $masters; $i++) {
+    for ($i=1; $i <= $masters; $i++) {
       printf OUTFILE "\nprocess(clk,reset)\nbegin\nif reset='1' then\n";
       printf OUTFILE "  %s_bg_q <= '0';\n",$master[$i]{"wbm"};
       printf OUTFILE "elsif clk'event and clk='1' then\n";
       printf OUTFILE "if %s_bg_q='0' then\n",$master[$i]{"wbm"};
       printf OUTFILE "  %s_bg_q <= %s_bg;\n",$master[$i]{"wbm"},$master[$i]{"wbm"};
       printf OUTFILE "elsif ack='1'";
-      if ($master[$i]{"tgc_o"} eq 1) {
+      if ($master[$i]{"tgc_o"} == 1) {
         printf OUTFILE " and (%s_%s_o=\"%s\" or %s_%s_o=\"%s\")",$master[$i]{"wbm"},$rename_tgc,$classic,$master[$i]{"wbm"},$rename_tgc,$endofburst; };
       printf OUTFILE " then\n  %s_bg_q <= '0';\nend if;\nend if;\nend process;\n",$master[$i]{"wbm"};
     }; # end for
     # _bg
     printf OUTFILE "\nidle <= '1' when %s_bg_q='0'",$master[1]{"wbm"};
-    for ($i=2; $i le $masters; $i++) {
+    for ($i=2; $i <= $masters; $i++) {
       printf OUTFILE " and %s_bg_q='0'",$master[$i]{"wbm"}; };
     printf OUTFILE " else '0';\n";
     printf OUTFILE "%s_bg_1 <= '1' when idle='1' and %s_cyc_o='1' and %s_trafic_ctrl_limit='0' else '0';\n",$master[1]{"wbm"},$master[1]{"wbm"},$master[1]{"wbm"};
     $depend = $master[1]{"wbm"}."_bg_1='0'";
-    for ($i=2; $i le $masters; $i++) {
+    for ($i=2; $i <= $masters; $i++) {
       printf OUTFILE "%s_bg_1 <= '1' when idle='1' and %s_cyc_o='1' and %s_trafic_ctrl_limit='0' and (%s) else '0';\n",$master[$i]{"wbm"},$master[$i]{"wbm"},$master[$i]{"wbm"},$depend;
       $depend = $depend." and ".$master[$i]{"wbm"}."_bg_1='0'";
     };
 
     printf OUTFILE "%s_bg_2 <= '1' when idle='1' and (%s) and %s_cyc_o='1' else '0';\n",$master[1]{"wbm"},$depend,$master[1]{"wbm"};
     $depend = $depend." and ".$master[1]{"wbm"}."_bg_2='0'";
-    for ($i=2; $i le $masters; $i++) {
+    for ($i=2; $i <= $masters; $i++) {
       printf OUTFILE "%s_bg_2 <= '1' when idle='1' and (%s) and %s_cyc_o='1' else '0';\n",$master[$i]{"wbm"},$depend,$master[$i]{"wbm"}; 
       $depend = $depend." and ".$master[$i]{"wbm"}."_bg_2='0'";
     };
-    for ($i=1; $i le $masters; $i++) {
+    for ($i=1; $i <= $masters; $i++) {
       printf OUTFILE "%s_bg <= %s_bg_q or %s_bg_1 or %s_bg_2;\n",$master[$i]{"wbm"},$master[$i]{"wbm"},$master[$i]{"wbm"},$master[$i]{"wbm"}; };
     # ce
     printf OUTFILE "ce <= %s_cyc_o",$master[1]{"wbm"};
-    for ($i=2; $i le $masters; $i++) {
+    for ($i=2; $i <= $masters; $i++) {
       printf OUTFILE " or %s_cyc_o",$master[$i]{"wbm"}; };
     printf OUTFILE " when idle='1' else '0';\n\n";
     # thats it
     printf OUTFILE "end block arbiter_sharedbus;\n\n";
   # interconnect crossbarswitch
   } else {
-    for ($j=1; $j le $slaves; $j++) {
+    for ($j=1; $j <= $slaves; $j++) {
       # single master ?
       $tmp=0;
-      for ($l=1; $l le $masters; $l++) {
-        if ($master[$l]{("priority_".($slave[$j]{"wbs"}))} ne 0) {
+      for ($l=1; $l <= $masters; $l++) {
+        if ($master[$l]{("priority_".($slave[$j]{"wbs"}))} != 0) {
           $only_master = $l;
           $tmp++;
         };
@@ -1272,8 +1275,8 @@ sub gen_arbiter {
         printf OUTFILE "%s_%s_bg <= %s_%s_ss and %s_cyc_o;\n",$master[$only_master]{"wbm"},$slave[$j]{"wbs"},$master[$only_master]{"wbm"},$slave[$j]{"wbs"},$master[$only_master]{"wbm"};
       } else {
         printf OUTFILE "arbiter_%s : block\n",$slave[$j]{"wbs"};
-        for ($i=1; $i le $masters; $i++) {
-          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0) {
+        for ($i=1; $i <= $masters; $i++) {
+          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0) {
             printf OUTFILE "  signal %s_bg, %s_bg_1, %s_bg_2, %s_bg_q : std_logic;\n",$master[$i]{"wbm"},$master[$i]{"wbm"},$master[$i]{"wbm"},$master[$i]{"wbm"};
             printf OUTFILE "  signal %s_trafic_limit : std_logic;\n",$master[$i]{"wbm"};
           };
@@ -1284,10 +1287,10 @@ sub gen_arbiter {
         # instantiate trafic_supervision(s)
         # calc tot priority per slave
         $priority = 0;
-        for ($i=1; $i le $masters; $i++) {
+        for ($i=1; $i <= $masters; $i++) {
           $priority += $master[$i]{("priority_".($slave[$j]{"wbs"}))}; };
-        for ($i=1; $i le $masters; $i++) {
-          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0) {
+        for ($i=1; $i <= $masters; $i++) {
+          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0) {
             printf OUTFILE "\ntrafic_supervision_%s : entity work.trafic_supervision\n",$i;
             printf OUTFILE "generic map(\n";
             printf OUTFILE "  priority => %s,\n",$master[$i]{("priority_".($slave[$j]{"wbs"}))};
@@ -1303,33 +1306,33 @@ sub gen_arbiter {
         # _bg_q
         # bg eq 1 => set
         # end of cycle => reset
-        for ($i=1; $i le $masters; $i++) {
-          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0) {
+        for ($i=1; $i <= $masters; $i++) {
+          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0) {
             printf OUTFILE "\nprocess(clk,reset)\nbegin\nif reset='1' then\n";
             printf OUTFILE "  %s_bg_q <= '0';\n",$master[$i]{"wbm"};
             printf OUTFILE "elsif clk'event and clk='1' then\n";
             printf OUTFILE "if %s_bg_q='0' then\n",$master[$i]{"wbm"};
             printf OUTFILE "  %s_bg_q <= %s_bg;\n",$master[$i]{"wbm"},$master[$i]{"wbm"};
             printf OUTFILE "elsif ack='1'";
-            if ($master[$i]{"tgc_o"} eq 1) {
+            if ($master[$i]{"tgc_o"} == 1) {
               printf OUTFILE " and (%s_%s_o=\"%s\" or %s_%s_o=\"%s\")",$master[$i]{"wbm"},$rename_tgc,$classic,$master[$i]{"wbm"},$rename_tgc,$endofburst; };
             printf OUTFILE " then\n  %s_bg_q <= '0';\nend if;\nend if;\nend process;\n",$master[$i]{"wbm"};
           };
         }; # end for
         # _bg
 	$depend = "";
-        $tmp=1; until ($master[$tmp]{("priority_".($slave[$j]{"wbs"}))} ne 0) {$tmp++};
+        $tmp=1; until ($master[$tmp]{("priority_".($slave[$j]{"wbs"}))} != 0) {$tmp++};
         printf OUTFILE "\nidle <= '1' when %s_bg_q='0'",$master[$tmp]{"wbm"};
-        for ($i=$tmp+1; $i le $masters; $i++) {
-          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0) {
+        for ($i=$tmp+1; $i <= $masters; $i++) {
+          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0) {
             printf OUTFILE " and %s_bg_q='0'",$master[$i]{"wbm"};
           };
         };
         printf OUTFILE " else '0';\n";
         printf OUTFILE "%s_bg_1 <= '1' when idle='1' and %s_cyc_o='1' and %s_%s_ss='1' and %s_trafic_limit='0' else '0';\n",$master[$tmp]{"wbm"},$master[$tmp]{"wbm"},$master[$tmp]{"wbm"},$slave[$j]{"wbs"},$master[$tmp]{"wbm"};
 	$depend = $master[$tmp]{"wbm"}."_bg_1='0'",;
-        for ($i=$tmp+1; $i le $masters; $i++) {
-          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0) {
+        for ($i=$tmp+1; $i <= $masters; $i++) {
+          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0) {
 	    printf OUTFILE "%s_bg_1 <= '1' when idle='1' and (%s) and %s_cyc_o='1' and %s_%s_ss='1' and %s_trafic_limit='0' else '0';\n",$master[$i]{"wbm"},$depend,$master[$i]{"wbm"},$master[$i]{"wbm"},$slave[$j]{"wbs"},$master[$i]{"wbm"},$slave[$j]{"wbs"},$master[$i]{"wbm"};;
 	    $depend = $depend." and ".$master[$i]{"wbm"}."_bg_1='0'";
           };
@@ -1337,29 +1340,29 @@ sub gen_arbiter {
         printf OUTFILE "%s_bg_2 <= '1' when idle='1' and (%s) and %s_cyc_o='1' and %s_%s_ss='1' else '0';\n",$master[$tmp]{"wbm"},$depend,$master[$tmp]{"wbm"},$master[$tmp]{"wbm"},$slave[$j]{"wbs"};
         $depend = $depend." and ".$master[$tmp]{"wbm"}."_bg_2='0'";
         $tmp1 = $tmp;
-        for ($i=$tmp+1; $i le $masters; $i++) {
-          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0) {
+        for ($i=$tmp+1; $i <= $masters; $i++) {
+          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0) {
             printf OUTFILE "%s_bg_2 <= '1' when idle='1' and (%s) and %s_cyc_o='1' and %s_%s_ss='1' else '0';\n",$master[$i]{"wbm"},$depend,$master[$i]{"wbm"},$master[$i]{"wbm"},$slave[$j]{"wbs"};
           $depend = $depend." and ".$master[$i]{"wbm"}."_bg_2='0'";
           };
         };
-        for ($i=1; $i le $masters; $i++) {
-          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0) {
+        for ($i=1; $i <= $masters; $i++) {
+          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0) {
             printf OUTFILE "%s_bg <= %s_bg_q or %s_bg_1 or %s_bg_2;\n",$master[$i]{"wbm"},$master[$i]{"wbm"},$master[$i]{"wbm"},$master[$i]{"wbm"};
           };
         };
         # ce
-        $tmp=1; until ($master[$tmp]{("priority_".($slave[$j]{"wbs"}))} ne 0) {$tmp++};
+        $tmp=1; until ($master[$tmp]{("priority_".($slave[$j]{"wbs"}))} != 0) {$tmp++};
         printf OUTFILE "ce <= (%s_cyc_o and %s_%s_ss)",$master[$tmp]{"wbm"},$master[$tmp]{"wbm"},$slave[$j]{"wbs"};
-          for ($i=$tmp+1; $i le $masters; $i++) {
-            if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0) {
+          for ($i=$tmp+1; $i <= $masters; $i++) {
+            if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0) {
               printf OUTFILE " or (%s_cyc_o and %s_%s_ss)",$master[$i]{"wbm"},$master[$i]{"wbm"},$slave[$j]{"wbs"};
             };
           };
         printf OUTFILE " when idle='1' else '0';\n";
         # global bg
-        for ($i=1; $i le $masters; $i++) {
-          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0) {
+        for ($i=1; $i <= $masters; $i++) {
+          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0) {
             printf OUTFILE "%s_%s_bg <= %s_bg;\n",$master[$i]{"wbm"},$slave[$j]{"wbs"},$master[$i]{"wbm"};
           };
         };
@@ -1376,16 +1379,16 @@ sub gen_adr_decoder{
     printf OUTFILE "begin\n";
     # adr
     printf OUTFILE "adr <= (%s_adr_o and %s_bg)",$master[1]{"wbm"},$master[1]{"wbm"};
-    if ($masters gt 1){
-      for ($i=2; $i le $masters; $i++) {
+    if ($masters > 1){
+      for ($i=2; $i <= $masters; $i++) {
         printf OUTFILE " or (%s_adr_o and %s_bg)",$master[$i]{"wbm"},$master[$i]{"wbm"}; };
     };
     printf OUTFILE ";\n";
     # slave select
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       printf OUTFILE "%s_ss <= '1' when adr(%s downto %s)=\"",$slave[$i]{"wbs"}, $adr_size-1,log(hex($slave[$i]{"size"}))/log(2);
       $slave[$i]{"baseadr"}=hex($slave[$i]{"baseadr"});
-      for ($j=$adr_size-1; $j ge (log(hex($slave[$i]{"size"}))/log(2)); $j--) {
+      for ($j=$adr_size-1; $j >= (log(hex($slave[$i]{"size"}))/log(2)); $j--) {
         if (($slave[$i]{"baseadr"}) >= (2**$j)) {
           $slave[$i]{"baseadr"} -= 2**$j;
           printf OUTFILE "1";
@@ -1395,10 +1398,10 @@ sub gen_adr_decoder{
       };
       printf OUTFILE "\"";
       # 1
-      if ($slave[$i]{"size1"} ne "ffffffff") {
+      if ($slave[$i]{"size1"} != 0) {
         printf OUTFILE " else\n'1' when adr(%s downto %s)=\"",$adr_size-1,log(hex($slave[$i]{"size1"}))/log(2);
         $slave[$i]{"baseadr1"}=hex($slave[$i]{"baseadr1"});
-        for ($j=$adr_size-1; $j ge (log(hex($slave[$i]{"size1"}))/log(2)); $j--) {
+        for ($j=$adr_size-1; $j >= (log(hex($slave[$i]{"size1"}))/log(2)); $j--) {
 		      if (($slave[$i]{"baseadr1"}) >= (2**$j)) {
             $slave[$i]{"baseadr1"} -= 2**$j;
             printf OUTFILE "1";
@@ -1409,10 +1412,10 @@ sub gen_adr_decoder{
         printf OUTFILE "\"";
       };
       # 2
-      if ($slave[$i]{"size2"} ne "ffffffff") {
+      if ($slave[$i]{"size2"} != 0) {
         printf OUTFILE " else\n'1' when adr(%s downto %s)=\"",$adr_size-1,log(hex($slave[$i]{"size2"}))/log(2);
         $slave[$i]{"baseadr2"}=hex($slave[$i]{"baseadr2"});
-        for ($j=$adr_size-1; $j ge (log(hex($slave[$i]{"size2"}))/log(2)); $j--) {
+        for ($j=$adr_size-1; $j >= (log(hex($slave[$i]{"size2"}))/log(2)); $j--) {
 		      if (($slave[$i]{"baseadr2"}) >= (2**$j)) {
 		        $slave[$i]{"baseadr2"} -= 2**$j;
 		        printf OUTFILE "1";
@@ -1423,10 +1426,10 @@ sub gen_adr_decoder{
         printf OUTFILE "\"";
       };
       # 3
-      if ($slave[$i]{"size3"} ne "ffffffff") {
+      if ($slave[$i]{"size3"} != 0) {
         printf OUTFILE " else\n'1' when adr(%s downto %s)=\"",$adr_size-1,log(hex($slave[$i]{"size3"}))/log(2);
         $slave[$i]{"baseadr3"}=hex($slave[$i]{"baseadr3"});
-        for ($j=$adr_size-1; $j ge (log(hex($slave[$i]{"size3"}))/log(2)); $j--) {
+        for ($j=$adr_size-1; $j >= (log(hex($slave[$i]{"size3"}))/log(2)); $j--) {
 		      if (($slave[$i]{"baseadr3"}) >= (2**$j)) {
             $slave[$i]{"baseadr3"} -= 2**$j;
 		        printf OUTFILE "1";
@@ -1439,20 +1442,20 @@ sub gen_adr_decoder{
       printf OUTFILE " else\n'0';\n";
       # adr to slaves
     };
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       printf OUTFILE "%s_adr_i <= adr(%s downto %s);\n",$slave[$i]{"wbs"},$slave[$i]{"adr_i_hi"},$slave[$i]{"adr_i_lo"}; };
   # crossbar switch
   } else {
     printf OUTFILE "begin\n";
     # master_slave_ss
 #    $j=0;
-    for ($i=1; $i le $masters; $i++) {
+    for ($i=1; $i <= $masters; $i++) {
       $slave[$j]{"baseadr"}=hex($slave[$j]{"baseadr"});
-      for ($j=1; $j le $slaves; $j++) {
-        if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0) {
+      for ($j=1; $j <= $slaves; $j++) {
+        if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0) {
         printf OUTFILE "%s_%s_ss <= '1' when %s_adr_o(%s downto %s)=\"",$master[$i]{"wbm"},$slave[$j]{"wbs"},$master[$i]{"wbm"},$adr_size-1,log(hex($slave[$j]{"size"}))/log(2);
         $tmp=hex($slave[$j]{"baseadr"});
-        for ($k=$adr_size-1; $k ge (log(hex($slave[$j]{"size"}))/log(2)); $k--) {
+        for ($k=$adr_size-1; $k >= (log(hex($slave[$j]{"size"}))/log(2)); $k--) {
           if ($tmp >= (2**$k)) {
             $tmp -= 2**$k;
             printf OUTFILE "1";
@@ -1462,10 +1465,10 @@ sub gen_adr_decoder{
         };
         printf OUTFILE "\"";
         # 2?
-        if ($slave[$j]{"size1"} ne "ffffffff") {
+        if ($slave[$j]{"size1"} != 0) {
           printf OUTFILE " else\n'1' when %s_adr_o(%s downto %s)=\"",$master[$i]{"wbm"},$adr_size-1,log(hex($slave[$j]{"size1"}))/log(2);
           $tmp=hex($slave[$j]{"baseadr1"});
-          for ($k=$adr_size-1; $k ge (log(hex($slave[$j]{"size1"}))/log(2)); $k--) {
+          for ($k=$adr_size-1; $k >= (log(hex($slave[$j]{"size1"}))/log(2)); $k--) {
 		        if ($tmp >= (2**$k)) {
 		          $tmp -= 2**$k;
 		          printf OUTFILE "1";
@@ -1476,10 +1479,10 @@ sub gen_adr_decoder{
           printf OUTFILE "\"";
         };
         # 3?
-        if ($slave[$j]{"size2"} ne "ffffffff") {
+        if ($slave[$j]{"size2"} != 0) {
           printf OUTFILE " else\n'1' when %s_adr_o(%s downto %s)=\"",$master[$i]{"wbm"},$adr_size-1,log(hex($slave[$j]{"size2"}))/log(2);
           $tmp=hex($slave[$j]{"baseadr2"});
-          for ($k=$adr_size-1; $k ge (log(hex($slave[$j]{"size2"}))/log(2)); $k--) {
+          for ($k=$adr_size-1; $k >= (log(hex($slave[$j]{"size2"}))/log(2)); $k--) {
 		        if ($tmp >= (2**$k)) {
 		          $tmp -= 2**$k;
 		          printf OUTFILE "1";
@@ -1494,22 +1497,22 @@ sub gen_adr_decoder{
       };
     };
     # _adr_o
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       # mux ?
       $tmp=0;
-      for ($l=1; $l le $masters; $l++) {
-        if ($master[$l]{("priority_".($slave[$i]{"wbs"}))} ne 0) {
+      for ($l=1; $l <= $masters; $l++) {
+        if ($master[$l]{("priority_".($slave[$i]{"wbs"}))} != 0) {
           $tmp++;
         };
       };
-      if ($tmp eq 1) {
-        $k=1; until ($master[$k]{("priority_".($slave[$i]{"wbs"}))} ne 0) {$k++};
+      if ($tmp == 1) {
+        $k=1; until ($master[$k]{("priority_".($slave[$i]{"wbs"}))} != 0) {$k++};
         printf OUTFILE "%s_adr_i <= %s_adr_o(%s downto %s);\n",$slave[$i]{"wbs"},$master[$k]{"wbm"},$slave[$i]{"adr_i_hi"},$slave[$i]{"adr_i_lo"};
       } else {
-        $k=1; until ($master[$k]{("priority_".($slave[$i]{"wbs"}))} ne 0) {$k++};
+        $k=1; until ($master[$k]{("priority_".($slave[$i]{"wbs"}))} != 0) {$k++};
         printf OUTFILE "%s_adr_i <= (%s_adr_o(%s downto %s) and %s_%s_bg)",$slave[$i]{"wbs"},$master[$k]{"wbm"},$slave[$i]{"adr_i_hi"},$slave[$i]{"adr_i_lo"},$master[$k]{"wbm"},$slave[$i]{"wbs"};
-        for ($j=$k+1; $j le $masters; $j++) {
-          if ($master[$j]{("priority_".($slave[$i]{"wbs"}))} ne 0) {
+        for ($j=$k+1; $j <= $masters; $j++) {
+          if ($master[$j]{("priority_".($slave[$i]{"wbs"}))} != 0) {
             printf OUTFILE " or (%s_adr_o(%s downto %s) and %s_%s_bg)",$master[$j]{"wbm"},$slave[$i]{"adr_i_hi"},$slave[$i]{"adr_i_lo"},$master[$j]{"wbm"},$slave[$i]{"wbs"};
           };
         };
@@ -1523,140 +1526,140 @@ sub gen_adr_decoder{
 sub gen_muxshb{
     printf OUTFILE "mux: block\n";
     printf OUTFILE "  signal cyc, stb, we, ack : std_logic;\n";
-    if (($rty_i gt 0) && ($rty_o gt 1)) {
+    if (($rty_i > 0) && ($rty_o > 1)) {
       printf OUTFILE "  signal rty : std_logic;\n"; };
-    if (($err_i gt 0) && ($err_o gt 1)) {
+    if (($err_i > 0) && ($err_o > 1)) {
       printf OUTFILE "  signal err : std_logic;\n"; };
-    if ($dat_size eq 8) {
+    if ($dat_size == 8) {
       printf OUTFILE "  signal sel : std_logic;\n";
     } else {
       printf OUTFILE "  signal sel : std_logic_vector(%s downto 0);\n",$dat_size/8-1;
     };
     printf OUTFILE "  signal dat_m2s, dat_s2m : std_logic_vector(%s downto 0);\n",$dat_size-1;
-    if (($tgc_o gt 0) && ($tgc_i gt 0)) {
+    if (($tgc_o > 0) && ($tgc_i > 0)) {
       printf OUTFILE "  signal tgc : std_logic_vector(%s downto 0);\n",$tgc_bits-1; };
-    if (($tga_o gt 0) && ($tga_i gt 0)) {
+    if (($tga_o > 0) && ($tga_i > 0)) {
       printf OUTFILE "  signal tga : std_logic_vector(%s downto 0);\n",$tga_bits-1; };
     printf OUTFILE "begin\n";
     # cyc
     printf OUTFILE "cyc <= (%s_cyc_o and %s_bg)",$master[1]{"wbm"},$master[1]{"wbm"};
-    if ($masters gt 1) {
-      for ($i=2; $i le $masters; $i++) {
+    if ($masters > 1) {
+      for ($i=2; $i <= $masters; $i++) {
         printf OUTFILE " or (%s_cyc_o and %s_bg)",$master[$i]{"wbm"},$master[$i]{"wbm"}; };
     };
     printf OUTFILE ";\n";
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       printf OUTFILE "%s_cyc_i <= %s_ss and cyc;\n",$slave[$i]{"wbs"},$slave[$i]{"wbs"}; };
     # stb
     printf OUTFILE "stb <= (%s_stb_o and %s_bg)",$master[1]{"wbm"},$master[1]{"wbm"};
-    if ($masters gt 1) {
-      for ($i=2; $i le $masters; $i++) {
+    if ($masters > 1) {
+      for ($i=2; $i <= $masters; $i++) {
         printf OUTFILE " or (%s_stb_o and %s_bg)",$master[$i]{"wbm"},$master[$i]{"wbm"}; };
     };
     printf OUTFILE ";\n";
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       printf OUTFILE "%s_stb_i <= stb;\n",$slave[$i]{"wbs"}; };
     # we
     $i=1; until ($master[$i]{"type"} ne "ro") {$i++};
     printf OUTFILE "we <= (%s_we_o and %s_bg)",$master[$i]{"wbm"},$master[$i]{"wbm"};
-    if ($i lt $masters) {
-      for ($j=$i+1; $j le $masters; $j++) {
+    if ($i < $masters) {
+      for ($j=$i+1; $j <= $masters; $j++) {
         if ($master[$j]{"type"} ne "ro") {
           printf OUTFILE " or (%s_we_o and %s_bg)",$master[$j]{"wbm"},$master[$j]{"wbm"};
         };
       };
     };
     printf OUTFILE ";\n";
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       if ($slave[$i]{"type"} ne "ro") {
         printf OUTFILE "%s_we_i <= we;\n",$slave[$i]{"wbs"};
       };
     };
     # ack
     printf OUTFILE "ack <= %s_ack_o",$slave[1]{"wbs"};
-    for ($i=2; $i le $slaves; $i++) {
+    for ($i=2; $i <= $slaves; $i++) {
       printf OUTFILE " or %s_ack_o",$slave[$i]{"wbs"}; };
     printf OUTFILE ";\n";
-    for ($i=1; $i le $masters; $i++) {
+    for ($i=1; $i <= $masters; $i++) {
       printf OUTFILE "%s_ack_i <= ack and %s_bg;\n",$master[$i]{"wbm"},$master[$i]{"wbm"}; };
     # rty
-    if (($rty_o eq 0) && ($rty_i gt 0)) {
-      for ($i=1; $i le $masters; $i++) {
-        if ($master[$i]{"rty_i"} eq 1) {
+    if (($rty_o == 0) && ($rty_i > 0)) {
+      for ($i=1; $i <= $masters; $i++) {
+        if ($master[$i]{"rty_i"} == 1) {
           printf OUTFILE "%s_rty_i <= '0';\n",$master[$i]{"wbm"};
         };
       };
-    } elsif (($rty_o eq 1) && ($rty_i gt 0)) {
-      $i=1; until ($slave[$i]{"rty_o"} eq 1) {$i++};
-      for ($j=1; $j le $masters; $j++) {
-        if ($master[$j]{"rty_i"} eq 1) {
+    } elsif (($rty_o == 1) && ($rty_i > 0)) {
+      $i=1; until ($slave[$i]{"rty_o"} == 1) {$i++};
+      for ($j=1; $j <= $masters; $j++) {
+        if ($master[$j]{"rty_i"} == 1) {
           printf OUTFILE "%s_rty_i <= %s_rty_o;\n",$master[$j]{"wbm"},$slave[$i]{"wbs"};
         };
       };
-    } elsif (($rty_o gt 1) && ($rty_i gt 0)) {
-      $i=1; until ($slave[$i]{"rty_o"} eq 1) {$i++};
+    } elsif (($rty_o > 1) && ($rty_i > 0)) {
+      $i=1; until ($slave[$i]{"rty_o"} == 1) {$i++};
       printf OUTFILE "rty <= %s_rty_o",$slave[$i]{"wbs"};
-      for ($j=$i+1; $j le $slaves; $j++) {
-        if ($slave[$j]{"rty_o"} eq 1) {
+      for ($j=$i+1; $j <= $slaves; $j++) {
+        if ($slave[$j]{"rty_o"} == 1) {
           printf OUTFILE " or %s_rty_o",$slave[$j]{"wbs"};
         };
       };
       printf OUTFILE ";\n";
-      for ($i=1; $i le $masters; $i++) {
-        if ($master[$i]{"rty_i"} eq 1) {
+      for ($i=1; $i <= $masters; $i++) {
+        if ($master[$i]{"rty_i"} == 1) {
           printf OUTFILE "%s_rty_i <= rty;\n",$master[$i]{"wbm"};
         };
       };
     };
     # err
-    if (($err_o eq 0) && ($err_i gt 0)) {
-      for ($i=1; $i le $masters; $i++) {
-        if ($master[$i]{"err_i"} eq 1) {
+    if (($err_o == 0) && ($err_i > 0)) {
+      for ($i=1; $i <= $masters; $i++) {
+        if ($master[$i]{"err_i"} == 1) {
           printf OUTFILE "%s_err_i <= '0';\n",$master[$i]{"wbm"};
         };
       };
-    } elsif (($err_o eq 1) && ($err_i gt 0)) {
-      $i=1; until ($slave[$i]{"err_o"} eq 1) {$i++};
-      for ($j=1; $j le $masters; $j++) {
-        if ($master[$j]{"err_i"} eq 1) {
+    } elsif (($err_o == 1) && ($err_i > 0)) {
+      $i=1; until ($slave[$i]{"err_o"} == 1) {$i++};
+      for ($j=1; $j <= $masters; $j++) {
+        if ($master[$j]{"err_i"} == 1) {
           printf OUTFILE "%s_err_i <= %s_err_o;\n",$master[$j]{"wbm"},$slave[$i]{"wbs"};
         };
       };
-    } elsif (($err_o gt 1) && ($err_i gt 0)) {
-      $i=1; until ($slave[$i]{"err_o"} eq 1) {$i++};
+    } elsif (($err_o > 1) && ($err_i > 0)) {
+      $i=1; until ($slave[$i]{"err_o"} == 1) {$i++};
       printf OUTFILE "err <= %s_err_o",$slave[$i]{"wbs"};
-      for ($j=$i+1; $j le $slaves; $j++) {
-        if ($slave[$j]{"err_o"} eq 1) {
+      for ($j=$i+1; $j <= $slaves; $j++) {
+        if ($slave[$j]{"err_o"} == 1) {
           printf OUTFILE " or %s_err_o",$slave[$j]{"wbs"};
         };
       };
       printf OUTFILE ";\n";
-      for ($i=1; $i le $masters; $i++) {
-        if ($master[$i]{"err_i"} eq 1) {
+      for ($i=1; $i <= $masters; $i++) {
+        if ($master[$i]{"err_i"} == 1) {
           printf OUTFILE "%s_err_i <= err;\n",$master[$i]{"wbm"};
         };
       };
     };
     # sel
     printf OUTFILE "sel <= (%s_sel_o and %s_bg)",$master[1]{"wbm"},$master[1]{"wbm"};
-    if ($masters gt 1) {
-      for ($i=2; $i le $masters; $i++) {
+    if ($masters > 1) {
+      for ($i=2; $i <= $masters; $i++) {
         printf OUTFILE " or (%s_sel_o and %s_bg)",$master[$i]{"wbm"},$master[$i]{"wbm"};
       };
     };
     printf OUTFILE ";\n";
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       printf OUTFILE "%s_sel_i <= sel;\n",$slave[$i]{"wbs"}; };
     # data m2s
     $i=1; until ($master[$i]{"type"} ne "ro") {$i++};
     printf OUTFILE "dat_m2s <= (%s_dat_o and %s_bg)",$master[$i]{"wbm"},$master[$i]{"wbm"};
-    if ($i lt $masters) {
-      for ($j=$i+1; $j le $masters; $j++) {
+    if ($i < $masters) {
+      for ($j=$i+1; $j <= $masters; $j++) {
         printf OUTFILE " or (%s_dat_o and %s_bg)",$master[$j]{"wbm"},$master[$j]{"wbm"};
       };
     };
     printf OUTFILE ";\n";
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       if ($slave[$i]{"type"} ne "ro") {
         printf OUTFILE "%s_dat_i <= dat_m2s;\n",$slave[$i]{"wbs"};
       };
@@ -1664,57 +1667,57 @@ sub gen_muxshb{
     # data s2m
     $i=1; until ($slave[$i]{"type"} ne "wo") {$i++};
     printf OUTFILE "dat_s2m <= (%s_dat_o and %s_ss)",$slave[$i]{"wbs"},$slave[$i]{"wbs"};
-    if ($i lt $slaves) {
-      for ($j=$i+1; $j le $slaves; $j++) {
+    if ($i < $slaves) {
+      for ($j=$i+1; $j <= $slaves; $j++) {
         printf OUTFILE " or (%s_dat_o and %s_ss)",$slave[$j]{"wbs"},$slave[$j]{"wbs"};
       };
     };
     printf OUTFILE ";\n";
-    for ($i=1; $i le $masters; $i++) {
+    for ($i=1; $i <= $masters; $i++) {
       if ($master[$i]{"type"} ne "wo") {
         printf OUTFILE "%s_dat_i <= dat_s2m;\n",$master[$i]{"wbm"};
       };
     };
     # tgc
-    if (($tgc_o eq 0) && ($tgc_i gt 0)) {
-      for ($i=1; $i le $slaves; $i++) {
-        if ($slave[$i]{"tgc_i"} eq 1) {
+    if (($tgc_o == 0) && ($tgc_i > 0)) {
+      for ($i=1; $i <= $slaves; $i++) {
+        if ($slave[$i]{"tgc_i"} == 1) {
           printf OUTFILE "%s_%s_i <= %s;\n",$slave[$i]{"wbs"},$rename_tgc,$classic;
         };
       };
-    } elsif (($tgc_o gt 0) && ($tgc_i gt 0)) {
-      $i=1; until ($master[$i]{"tgc_o"} eq 1) {$i++};
+    } elsif (($tgc_o > 0) && ($tgc_i > 0)) {
+      $i=1; until ($master[$i]{"tgc_o"} == 1) {$i++};
       printf OUTFILE "tgc <= (%s_%s_o and %s_bg)",$master[$i]{"wbm"},$rename_tgc,$master[$i]{"wbm"};
-      for ($j=$i+1; $j le $masters; $j++) {
-        if ($master[$j]{"tgc_o"} eq 1) {
+      for ($j=$i+1; $j <= $masters; $j++) {
+        if ($master[$j]{"tgc_o"} == 1) {
           printf OUTFILE " or (%s_%s_o and %s_bg)",$master[$j]{"wbm"},$rename_tgc,$master[$j]{"wbm"};
         };
       };
       printf OUTFILE ";\n";
-      for ($i=1; $i le $slaves; $i++) {
-        if ($slave[$i]{"tgc_i"} eq 1) {
+      for ($i=1; $i <= $slaves; $i++) {
+        if ($slave[$i]{"tgc_i"} == 1) {
           printf OUTFILE "%s_%s_i <= tgc;\n",$slave[$i]{"wbs"},$rename_tgc,$slave[$i]{"wbs"};
         };
       };
     };
     # tga
-    if (($tga_o eq 0) && ($tga_i gt 0)) {
-      for ($i=1; $i le $slaves; $i++) {
-        if ($slave[$i]{"tga_i"} eq 1) {
+    if (($tga_o == 0) && ($tga_i > 0)) {
+      for ($i=1; $i <= $slaves; $i++) {
+        if ($slave[$i]{"tga_i"} == 1) {
           printf OUTFILE "%s_%s_i <= (others=>'0');\n",$slave[$i]{"wbs"},$rename_tga;
         };
       };
-    } elsif (($tga_o gt 0) && ($tga_i gt 0)) {
-      $i=1; until ($master[$i]{"tga_o"} eq 1) {$i++};
+    } elsif (($tga_o > 0) && ($tga_i > 0)) {
+      $i=1; until ($master[$i]{"tga_o"} == 1) {$i++};
       printf OUTFILE "tga <= (%s_%s_o and %s_bg)",$master[$i]{"wbm"},$rename_tga,$master[$i]{"wbm"};
-      for ($j=$i+1; $j le $masters; $j++) {
-        if ($master[$j]{"tga_o"} eq 1) {
+      for ($j=$i+1; $j <= $masters; $j++) {
+        if ($master[$j]{"tga_o"} == 1) {
           printf OUTFILE " or (%s_%s_o and %s_bg)",$master[$j]{"wbm"},$rename_tga,$master[$j]{"wbm"};
         };
       };
       printf OUTFILE ";\n";
-      for ($i=1; $i le $slaves; $i++) {
-        if ($slave[$i]{"tga_i"} eq 1) {
+      for ($i=1; $i <= $slaves; $i++) {
+        if ($slave[$i]{"tga_i"} == 1) {
           printf OUTFILE "%s_%s_i <= tga;\n",$slave[$i]{"wbs"},$rename_tga,$slave[$i]{"wbs"};
         };
       };
@@ -1726,11 +1729,11 @@ sub gen_muxshb{
 sub gen_muxcbs{
     # cyc
     printf OUTFILE "-- cyc_i(s)\n";
-    for ($i=1; $i le $slaves; $i++) {
-      $tmp=1; until ($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} ne 0) {$tmp++};
+    for ($i=1; $i <= $slaves; $i++) {
+      $tmp=1; until ($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} != 0) {$tmp++};
       printf OUTFILE "%s_cyc_i <= (%s_cyc_o and %s_%s_bg)",$slave[$i]{"wbs"},$master[$tmp]{"wbm"},$master[$tmp]{"wbm"},$slave[$i]{"wbs"};
-      for ($j=$tmp+1; $j le $masters; $j++) {
-        if ($master[$j]{("priority_".($slave[$i]{"wbs"}))} ne 0) {
+      for ($j=$tmp+1; $j <= $masters; $j++) {
+        if ($master[$j]{("priority_".($slave[$i]{"wbs"}))} != 0) {
           printf OUTFILE " or (%s_cyc_o and %s_%s_bg)",$master[$j]{"wbm"},$master[$j]{"wbm"},$slave[$i]{"wbs"};
         };
       };
@@ -1738,11 +1741,11 @@ sub gen_muxcbs{
     };
     # stb
     printf OUTFILE "-- stb_i(s)\n";
-    for ($i=1; $i le $slaves; $i++) {
-      $tmp=1; until ($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} ne 0) {$tmp++};
+    for ($i=1; $i <= $slaves; $i++) {
+      $tmp=1; until ($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} != 0) {$tmp++};
       printf OUTFILE "%s_stb_i <= (%s_stb_o and %s_%s_bg)",$slave[$i]{"wbs"},$master[$tmp]{"wbm"},$master[$tmp]{"wbm"},$slave[$i]{"wbs"};
-      for ($j=$tmp+1; $j le $masters; $j++) {
-        if ($master[$j]{("priority_".($slave[$i]{"wbs"}))} ne 0) {
+      for ($j=$tmp+1; $j <= $masters; $j++) {
+        if ($master[$j]{("priority_".($slave[$i]{"wbs"}))} != 0) {
           printf OUTFILE " or (%s_stb_o and %s_%s_bg)",$master[$j]{"wbm"},$master[$j]{"wbm"},$slave[$i]{"wbs"};
         };
       };
@@ -1750,12 +1753,12 @@ sub gen_muxcbs{
     };
     # we
     printf OUTFILE "-- we_i(s)\n";
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       if ($slave[$i]{"type"} ne "ro") {
-        $tmp=1; until (($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} ne 0) && ($master[$tmp]{"type"} ne "ro")) {$tmp++};
+        $tmp=1; until (($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} != 0) && ($master[$tmp]{"type"} ne "ro")) {$tmp++};
         printf OUTFILE "%s_we_i <= (%s_we_o and %s_%s_bg)",$slave[$i]{"wbs"},$master[$tmp]{"wbm"},$master[$tmp]{"wbm"},$slave[$i]{"wbs"};
-        for ($j=$tmp+1; $j le $masters; $j++) {
-          if (($master[$j]{("priority_".($slave[$i]{"wbs"}))} ne 0) && ($master[$j]{"type"} ne "ro")) {
+        for ($j=$tmp+1; $j <= $masters; $j++) {
+          if (($master[$j]{("priority_".($slave[$i]{"wbs"}))} != 0) && ($master[$j]{"type"} ne "ro")) {
             printf OUTFILE " or (%s_we_o and %s_%s_bg)",$master[$j]{"wbm"},$master[$j]{"wbm"},$slave[$i]{"wbs"};
           };
         };
@@ -1764,11 +1767,11 @@ sub gen_muxcbs{
     };
     # ack
     printf OUTFILE "-- ack_i(s)\n";
-    for ($i=1; $i le $masters; $i++) {
-      $tmp=1; until ($master[$i]{("priority_".($slave[$tmp]{"wbs"}))} ne 0) {$tmp++};
+    for ($i=1; $i <= $masters; $i++) {
+      $tmp=1; until ($master[$i]{("priority_".($slave[$tmp]{"wbs"}))} != 0) {$tmp++};
       printf OUTFILE "%s_ack_i <= (%s_ack_o and %s_%s_bg)",$master[$i]{"wbm"},$slave[$tmp]{"wbs"},$master[$i]{"wbm"},$slave[$tmp]{"wbs"};
-      for ($j=$tmp+1; $j le $slaves; $j++) {
-        if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0) {
+      for ($j=$tmp+1; $j <= $slaves; $j++) {
+        if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0) {
           printf OUTFILE " or (%s_ack_o and %s_%s_bg)",$slave[$j]{"wbs"},$master[$i]{"wbm"},$slave[$j]{"wbs"};
         };
       };
@@ -1776,21 +1779,21 @@ sub gen_muxcbs{
     };
     # rty
     printf OUTFILE "-- rty_i(s)\n";
-    for ($i=1; $i le $masters; $i++) {
-      if ($master[$i]{"rty_i"} eq 1) {
+    for ($i=1; $i <= $masters; $i++) {
+      if ($master[$i]{"rty_i"} == 1) {
         $rty_o=0;
-        for ($j=1; $j le $masters; $j++) {
-          if (($slave[$j]{"rty_o"} eq 1) && ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0)) {
+        for ($j=1; $j <= $masters; $j++) {
+          if (($slave[$j]{"rty_o"} == 1) && ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0)) {
             $rty_o+=1;
           };
         };
-        if ($rty_o eq 0) {
+        if ($rty_o == 0) {
           printf OUTFILE "%s_rty_i <= '0';\n",$master[$i]{"wbm"};
         } else {
-          $tmp=1; until ($master[$i]{("priority_".($slave[$tmp]{"wbs"}))} ne 0) {$tmp++};
+          $tmp=1; until ($master[$i]{("priority_".($slave[$tmp]{"wbs"}))} != 0) {$tmp++};
           printf OUTFILE "%s_rty_i <= (%s_rty_o and %s_%s_bg)",$master[$i]{"wbm"},$slave[$tmp]{"wbs"},$master[$i]{"wbm"},$slave[$tmp]{"wbs"};
-          for ($j=$tmp+1; $j le $slaves; $j++) {
-            if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0) {
+          for ($j=$tmp+1; $j <= $slaves; $j++) {
+            if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0) {
               printf OUTFILE " or (%s_rty_o and %s_%s_bg)",$slave[$j]{"wbs"},$master[$i]{"wbm"},$slave[$j]{"wbs"};
             };
           };
@@ -1800,21 +1803,21 @@ sub gen_muxcbs{
     };
     # err
     printf OUTFILE "-- err_i(s)\n";
-    for ($i=1; $i le $masters; $i++) {
-      if ($master[$i]{"err_i"} eq 1) {
+    for ($i=1; $i <= $masters; $i++) {
+      if ($master[$i]{"err_i"} == 1) {
         $err_o=0;
-        for ($j=1; $j le $masters; $j++) {
-          if (($slave[$j]{"err_o"} eq 1) && ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0)) {
+        for ($j=1; $j <= $masters; $j++) {
+          if (($slave[$j]{"err_o"} == 1) && ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0)) {
             $err_o+=1;
           };
         };
-        if ($err_o eq 0) {
+        if ($err_o == 0) {
           printf OUTFILE "%s_err_i <= '0';\n",$master[$i]{"wbm"};
         } else {
-          $tmp=1; until ($master[$i]{("priority_".($slave[$tmp]{"wbs"}))} ne 0) {$tmp++};
+          $tmp=1; until ($master[$i]{("priority_".($slave[$tmp]{"wbs"}))} != 0) {$tmp++};
           printf OUTFILE "%s_err_i <= (%s_err_o and %s_%s_bg)",$master[$i]{"wbm"},$slave[$tmp]{"wbs"},$master[$i]{"wbm"},$slave[$tmp]{"wbs"};
-          for ($j=$tmp+1; $j le $slaves; $j++) {
-            if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0) {
+          for ($j=$tmp+1; $j <= $slaves; $j++) {
+            if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0) {
               printf OUTFILE " or (%s_err_o and %s_%s_bg)",$slave[$j]{"wbs"},$master[$i]{"wbm"},$slave[$j]{"wbs"};
             };
           };
@@ -1824,12 +1827,12 @@ sub gen_muxcbs{
     };
     # sel
     printf OUTFILE "-- sel_i(s)\n";
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       if ($dat_size >= 16) {
-        $tmp=1; until ($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} ne 0) {$tmp++};
+        $tmp=1; until ($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} != 0) {$tmp++};
         printf OUTFILE "%s_sel_i <= (%s_sel_o and %s_%s_bg)",$slave[$i]{"wbs"},$master[$tmp]{"wbm"},$master[$tmp]{"wbm"},$slave[$i]{"wbs"};
-        for ($j=$tmp+1; $j le $masters; $j++) {
-          if ($master[$j]{("priority_".($slave[$i]{"wbs"}))} ne 0) {
+        for ($j=$tmp+1; $j <= $masters; $j++) {
+          if ($master[$j]{("priority_".($slave[$i]{"wbs"}))} != 0) {
             printf OUTFILE " or (%s_sel_o and %s_%s_bg)",$master[$j]{"wbm"},$master[$j]{"wbm"},$slave[$i]{"wbs"};
           };
         };
@@ -1838,22 +1841,22 @@ sub gen_muxcbs{
     };
     # dat
     printf OUTFILE "-- slave dat_i(s)\n";
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       if ($slave[$i]{"type"} ne "ro") {
         $tmp=0;
-        for ($j=1; $j le $masters; $j++) {
-          if (($master[$j]{("priority_".($slave[$i]{"wbs"}))} ne 0) && ($master[$j]{"type"} ne "ro")) {
+        for ($j=1; $j <= $masters; $j++) {
+          if (($master[$j]{("priority_".($slave[$i]{"wbs"}))} != 0) && ($master[$j]{"type"} ne "ro")) {
             $tmp+=1;
           };
         };
-        if ($tmp eq 1) {
-          $j=1; until (($master[$j]{("priority_".($slave[$i]{"wbs"}))} ne 0) && ($master[$j]{"type"} ne "ro")) {$j++};
+        if ($tmp == 1) {
+          $j=1; until (($master[$j]{("priority_".($slave[$i]{"wbs"}))} != 0) && ($master[$j]{"type"} ne "ro")) {$j++};
           printf OUTFILE "%s_dat_i <= %s_dat_o;\n",$slave[$i]{"wbs"},$master[$j]{"wbm"};
         } elsif ($tmp >= 1) {
-          $tmp=1; until (($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} ne 0) && ($master[$tmp]{"type"} ne "ro")) {$tmp++};
+          $tmp=1; until (($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} != 0) && ($master[$tmp]{"type"} ne "ro")) {$tmp++};
           printf OUTFILE "%s_dat_i <= (%s_dat_o and %s_%s_bg)",$slave[$i]{"wbs"},$master[$tmp]{"wbm"},$master[$tmp]{"wbm"},$slave[$i]{"wbs"};
-          for ($j=$tmp+1; $j le $masters; $j++) {
-            if (($master[$j]{("priority_".($slave[$i]{"wbs"}))} ne 0) && ($master[$j]{"type"} ne "ro")) {
+          for ($j=$tmp+1; $j <= $masters; $j++) {
+            if (($master[$j]{("priority_".($slave[$i]{"wbs"}))} != 0) && ($master[$j]{"type"} ne "ro")) {
               printf OUTFILE " or (%s_dat_o and %s_%s_bg)",$master[$j]{"wbm"},$master[$j]{"wbm"},$slave[$i]{"wbs"};
             };
           };
@@ -1862,22 +1865,22 @@ sub gen_muxcbs{
       };
     };
     printf OUTFILE "-- master dat_i(s)\n";
-    for ($i=1; $i le $masters; $i++) {
+    for ($i=1; $i <= $masters; $i++) {
       if ($master[$i]{"type"} ne "wo") {
         $tmp=0;
-        for ($j=1; $j le $slaves; $j++) {
-          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0) {
+        for ($j=1; $j <= $slaves; $j++) {
+          if ($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0) {
             $tmp+=1;
           };
         };
-        if ($tmp eq 1) {
-          $tmp=1; until ($master[$i]{("priority_".($slave[$tmp]{"wbs"}))} ne 0) {$tmp++};
+        if ($tmp == 1) {
+          $tmp=1; until ($master[$i]{("priority_".($slave[$tmp]{"wbs"}))} != 0) {$tmp++};
           printf OUTFILE "%s_dat_i <= %s_dat_o",$master[$i]{"wbm"},$slave[$tmp]{"wbs"};
         } else {
-          $tmp=1; until ($master[$i]{("priority_".($slave[$tmp]{"wbs"}))} ne 0) {$tmp++};
+          $tmp=1; until ($master[$i]{("priority_".($slave[$tmp]{"wbs"}))} != 0) {$tmp++};
           printf OUTFILE "%s_dat_i <= (%s_dat_o and %s_%s_bg)",$master[$i]{"wbm"},$slave[$tmp]{"wbs"},$master[$i]{"wbm"},$slave[$tmp]{"wbs"};
-          for ($j=$tmp+1; $j le $slaves; $j++) {
-            if (($master[$i]{("priority_".($slave[$j]{"wbs"}))} ne 0) && ($master[$i]{"type"} ne "wo")) {
+          for ($j=$tmp+1; $j <= $slaves; $j++) {
+            if (($master[$i]{("priority_".($slave[$j]{"wbs"}))} != 0) && ($master[$i]{"type"} ne "wo")) {
               printf OUTFILE " or (%s_dat_o and %s_%s_bg)",$slave[$j]{"wbs"},$master[$i]{"wbm"},$slave[$j]{"wbs"};
             };
           };
@@ -1887,23 +1890,23 @@ sub gen_muxcbs{
     };
     # tgc
     printf OUTFILE "-- tgc_i\n";
-    for ($i=1; $i le $slaves; $i++) {
-      if ($slave[$i]{"tgc_i"} eq 1) {
+    for ($i=1; $i <= $slaves; $i++) {
+      if ($slave[$i]{"tgc_i"} == 1) {
         $tmp=0;
-        for ($j=1; $j le $masters; $j++) {
-          if ($master[$j]{("priority_".($slave[$i]{"wbs"}))} ne 0) {
+        for ($j=1; $j <= $masters; $j++) {
+          if ($master[$j]{("priority_".($slave[$i]{"wbs"}))} != 0) {
             $tmp+=1;
           };
         };
-        if ($tmp eq 1) {
-          $tmp=1; until ($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} ne 0) {$tmp++;};
+        if ($tmp == 1) {
+          $tmp=1; until ($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} != 0) {$tmp++;};
           printf OUTFILE "%s_%s_i <= %s_%s_o",$slave[$i]{"wbs"},$rename_tgc,$master[$tmp]{"wbm"},$rename_tgc;
         } else {
-          $tmp=1; until ($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} ne 0) {$tmp++;};
+          $tmp=1; until ($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} != 0) {$tmp++;};
           printf OUTFILE "%s_%s_i <= (%s_%s_o and %s_%s_bg)",$slave[$i]{"wbs"},$rename_tgc,$master[$tmp]{"wbm"},$rename_tgc,$master[$tmp]{"wbm"},$slave[$i]{"wbs"};
-          for ($j=$tmp+1; $j le $masters; $j++) {
-            if ($master[$j]{("priority_".($slave[$i]{"wbs"}))} ne 0) {
-	      if ($master[$j]{"tga_o"} eq 1) {
+          for ($j=$tmp+1; $j <= $masters; $j++) {
+            if ($master[$j]{("priority_".($slave[$i]{"wbs"}))} != 0) {
+	      if ($master[$j]{"tga_o"} == 1) {
                 printf OUTFILE " or (%s_%s_o and %s_%s_bg)",$master[$j]{"wbm"},$rename_tgc,$master[$j]{"wbm"},$slave[$i]{"wbs"};
 	      } else {
 		if ($classic ne "000") {
@@ -1919,23 +1922,23 @@ sub gen_muxcbs{
     };
     # tga
     printf OUTFILE "-- tga_i\n";
-    for ($i=1; $i le $slaves; $i++) {
-      if ($slave[$i]{"tga_i"} eq 1) {
+    for ($i=1; $i <= $slaves; $i++) {
+      if ($slave[$i]{"tga_i"} == 1) {
         $tmp=0;
-        for ($j=1; $j le $masters; $j++) {
-          if ($master[$j]{("priority_".($slave[$i]{"wbs"}))} ne 0) {
+        for ($j=1; $j <= $masters; $j++) {
+          if ($master[$j]{("priority_".($slave[$i]{"wbs"}))} != 0) {
             $tmp+=1;
           };
         };
-        if ($tmp eq 1) {
-          $tmp=1; until ($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} ne 0) {$tmp++;};
+        if ($tmp == 1) {
+          $tmp=1; until ($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} != 0) {$tmp++;};
           printf OUTFILE "%s_%s_i <= %s_%s_o",$slave[$i]{"wbs"},$rename_tga,$master[$tmp]{"wbm"},$rename_tga;
         } else {
-          $tmp=1; until ($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} ne 0) {$tmp++;};
+          $tmp=1; until ($master[$tmp]{("priority_".($slave[$i]{"wbs"}))} != 0) {$tmp++;};
           printf OUTFILE "%s_%s_i <= (%s_%s_o and %s_%s_bg)",$slave[$i]{"wbs"},$rename_tga,$master[$tmp]{"wbm"},$rename_tga,$master[$tmp]{"wbm"},$slave[$i]{"wbs"};
-          for ($j=$tmp+1; $j le $masters; $j++) {
-            if ($master[$j]{("priority_".($slave[$i]{"wbs"}))} ne 0) {
-	      if ($master[$j]{"tga_o"} eq 1) {
+          for ($j=$tmp+1; $j <= $masters; $j++) {
+            if ($master[$j]{("priority_".($slave[$i]{"wbs"}))} != 0) {
+	      if ($master[$j]{"tga_o"} == 1) {
                 printf OUTFILE " or (%s_%s_o and %s_%s_bg)",$master[$j]{"wbm"},$rename_tga,$master[$j]{"wbm"},$slave[$i]{"wbs"};
 	      };
             };
@@ -1947,13 +1950,13 @@ sub gen_muxcbs{
 };
 
 sub gen_remap{
-    for ($i=1; $i le $masters; $i++) {
+    for ($i=1; $i <= $masters; $i++) {
       if ($master[$i]{"type"} ne "wo") {
         printf OUTFILE "%s_wbm_i.dat_i <= %s_dat_i;\n",$master[$i]{"wbm"},$master[$i]{"wbm"}; };
       printf OUTFILE "%s_wbm_i.ack_i <= %s_ack_i ;\n",$master[$i]{"wbm"},$master[$i]{"wbm"};
-      if ($master[$i]{"err_i"} eq 1) {
+      if ($master[$i]{"err_i"} == 1) {
         printf OUTFILE "%s_wbm_i.err_i <= %s_err_i;\n",$master[$i]{"wbm"},$master[$i]{"wbm"}; };
-      if ($master[$i]{"rty_i"} eq 1) {
+      if ($master[$i]{"rty_i"} == 1) {
         printf OUTFILE "%s_wbm_i.rty_i <= %s_rty_i;\n",$master[$i]{"wbm"},$master[$i]{"wbm"}; };
       if ($master[$i]{"type"} ne "ro") {
         printf OUTFILE "%s_dat_o <= %s_wbm_o.dat_o;\n",$master[$i]{"wbm"},$master[$i]{"wbm"};
@@ -1961,20 +1964,20 @@ sub gen_remap{
       };
       printf OUTFILE "%s_sel_o <= %s_wbm_o.sel_o;\n",$master[$i]{"wbm"},$master[$i]{"wbm"};
       printf OUTFILE "%s_adr_o <= %s_wbm_o.adr_o;\n",$master[$i]{"wbm"},$master[$i]{"wbm"};
-      if ($master[$i]{"tgc_o"} eq 1) {
+      if ($master[$i]{"tgc_o"} == 1) {
         printf OUTFILE "%s_%s_o <= %s_wbm_o.%s_o;\n",$master[$i]{"wbm"},$rename_tgc,$master[$i]{"wbm"},$rename_tgc; };
-      if ($master[$i]{"tga_o"} eq 1) {
+      if ($master[$i]{"tga_o"} == 1) {
         printf OUTFILE "%s_%s_o <= %s_wbm_o.%s_o;\n",$master[$i]{"wbm"},$rename_tga,$master[$i]{"wbm"},$rename_tga; };
       printf OUTFILE "%s_cyc_o <= %s_wbm_o.cyc_o;\n",$master[$i]{"wbm"},$master[$i]{"wbm"};
       printf OUTFILE "%s_stb_o <= %s_wbm_o.stb_o;\n",$master[$i]{"wbm"},$master[$i]{"wbm"};
     };
-    for ($i=1; $i le $slaves; $i++) {
+    for ($i=1; $i <= $slaves; $i++) {
       if ($slave[$i]{"type"} ne "wo") {
         printf OUTFILE "%s_dat_o <= %s_wbs_o.dat_o;\n",$slave[$i]{"wbs"},$slave[$i]{"wbs"}; };
       printf OUTFILE "%s_ack_o <= %s_wbs_o.ack_o;\n",$slave[$i]{"wbs"},$slave[$i]{"wbs"};
-      if ($slave[$i]{"err_o"} eq 1) {
+      if ($slave[$i]{"err_o"} == 1) {
         printf OUTFILE "%s_err_o <= %s_wbs_o.err_o;\n",$slave[$i]{"wbs"},$slave[$i]{"wbs"}; };
-      if ($slave[$i]{"rty_o"} eq 1) {
+      if ($slave[$i]{"rty_o"} == 1) {
         printf OUTFILE "%s_rty_o <= %s_wbs_o.rty_o;\n",$slave[$i]{"wbs"},$slave[$i]{"wbs"}; };
       if ($slave[$i]{"type"} ne "ro") {
         printf OUTFILE "%s_wbs_i.dat_i <= %s_dat_i;\n",$slave[$i]{"wbs"},$slave[$i]{"wbs"};
@@ -1982,9 +1985,9 @@ sub gen_remap{
       };
       printf OUTFILE "%s_wbs_i.sel_i <= %s_sel_i;\n",$slave[$i]{"wbs"},$slave[$i]{"wbs"};
       printf OUTFILE "%s_wbs_i.adr_i <= %s_adr_i;\n",$slave[$i]{"wbs"},$slave[$i]{"wbs"};
-      if ($slave[$i]{"tgc_i"} eq 1) {
+      if ($slave[$i]{"tgc_i"} == 1) {
         printf OUTFILE "%s_wbs_i.%s_i <= %s_%s_i;\n",$slave[$i]{"wbs"},$rename_tgc,$slave[$i]{"wbs"},$rename_tgc; };
-      if ($slave[$i]{"tga_i"} eq 1) {
+      if ($slave[$i]{"tga_i"} == 1) {
         printf OUTFILE "%s_wbs_i.%s_i <= %s_%s_i;\n",$slave[$i]{"wbs"},$rename_tga,$slave[$i]{"wbs"},$rename_tga; };
       printf OUTFILE "%s_wbs_i.cyc_i <= %s_cyc_i;\n",$slave[$i]{"wbs"},$slave[$i]{"wbs"};
       printf OUTFILE "%s_wbs_i.stb_i <= %s_stb_i;\n",$slave[$i]{"wbs"},$slave[$i]{"wbs"};
