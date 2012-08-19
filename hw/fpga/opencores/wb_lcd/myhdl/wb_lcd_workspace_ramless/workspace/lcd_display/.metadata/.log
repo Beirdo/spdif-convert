@@ -1,0 +1,36 @@
+!SESSION 2009-04-19 02:30:12.844 -----------------------------------------------
+eclipse.buildId=M20070212-1330
+java.version=1.6.0_10
+java.vendor=Sun Microsystems Inc.
+BootLoader constants: OS=linux, ARCH=x86, WS=gtk, NL=es_ES
+Command-line arguments:  -data /home/jose/Escritorio/unison/cores/lcd/wb_lcd_workspace_ramless/workspace/lcd_display -os linux -ws gtk -arch x86
+
+!ENTRY org.eclipse.osgi 2 1 2009-04-19 02:30:14.551
+!MESSAGE NLS missing message: initializer_error in: org.eclipse.core.internal.runtime.messages
+
+!ENTRY org.eclipse.osgi 2 1 2009-04-19 02:30:14.551
+!MESSAGE NLS missing message: fileInitializer_fileNotFound in: org.eclipse.core.internal.runtime.messages
+
+!ENTRY org.eclipse.osgi 2 1 2009-04-19 02:30:14.551
+!MESSAGE NLS missing message: fileInitializer_IOError in: org.eclipse.core.internal.runtime.messages
+
+!ENTRY org.eclipse.osgi 2 1 2009-04-19 02:30:14.552
+!MESSAGE NLS missing message: fileInitializer_missingFileName in: org.eclipse.core.internal.runtime.messages
+!SESSION 2009-04-19 20:49:40.610 -----------------------------------------------
+eclipse.buildId=M20070212-1330
+java.version=1.6.0_10
+java.vendor=Sun Microsystems Inc.
+BootLoader constants: OS=linux, ARCH=x86, WS=gtk, NL=es_ES
+Command-line arguments:  -data /home/jose/Escritorio/unison/cores/lcd/wb_lcd_workspace_ramless/workspace/lcd_display -os linux -ws gtk -arch x86
+
+!ENTRY org.eclipse.osgi 2 1 2009-04-19 20:49:47.340
+!MESSAGE NLS missing message: initializer_error in: org.eclipse.core.internal.runtime.messages
+
+!ENTRY org.eclipse.osgi 2 1 2009-04-19 20:49:47.341
+!MESSAGE NLS missing message: fileInitializer_fileNotFound in: org.eclipse.core.internal.runtime.messages
+
+!ENTRY org.eclipse.osgi 2 1 2009-04-19 20:49:47.341
+!MESSAGE NLS missing message: fileInitializer_IOError in: org.eclipse.core.internal.runtime.messages
+
+!ENTRY org.eclipse.osgi 2 1 2009-04-19 20:49:47.342
+!MESSAGE NLS missing message: fileInitializer_missingFileName in: org.eclipse.core.internal.runtime.messages
