@@ -1,96 +1,53 @@
-//////////////////////////////////////////////////////////////////
-//                                                              //
-//  Top-level module instantiating the entire Amber 2 system.   //
-//                                                              //
-//  This file is part of the Amber project                      //
-//  http://www.opencores.org/project,amber                      //
-//                                                              //
-//  Description                                                 //
-//  This is the highest level synthesizable module in the       //
-//  project. The ports in this module represent pins on the     //
-//  FPGA.                                                       //
-//                                                              //
-//  Author(s):                                                  //
-//      - Conor Santifort, csantifort.amber@gmail.com           //
-//                                                              //
-//////////////////////////////////////////////////////////////////
-//                                                              //
-// Copyright (C) 2010 Authors and OPENCORES.ORG                 //
-//                                                              //
-// This source file may be used and distributed without         //
-// restriction provided that this copyright statement is not    //
-// removed from the file and that any derivative work contains  //
-// the original copyright notice and the associated disclaimer. //
-//                                                              //
-// This source file is free software; you can redistribute it   //
-// and/or modify it under the terms of the GNU Lesser General   //
-// Public License as published by the Free Software Foundation; //
-// either version 2.1 of the License, or (at your option) any   //
-// later version.                                               //
-//                                                              //
-// This source is distributed in the hope that it will be       //
-// useful, but WITHOUT ANY WARRANTY; without even the implied   //
-// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR      //
-// PURPOSE.  See the GNU Lesser General Public License for more //
-// details.                                                     //
-//                                                              //
-// You should have received a copy of the GNU Lesser General    //
-// Public License along with this source; if not, download it   //
-// from http://www.opencores.org/lgpl.shtml                     //
-//                                                              //
-//////////////////////////////////////////////////////////////////
-
-
 module system  
 (
-input                       brd_rst,
-input                       brd_clk_n,  
-input                       brd_clk_p,  
+    input                       brd_rst,
+    input                       brd_clk_n,  
+    input                       brd_clk_p,  
 
-// UART 0 Interface
-input                       i_uart0_cts,
-output                      o_uart0_tx,
-output                      o_uart0_rts,
-input                       i_uart0_rx,
-output                      o_uart0_dtr,
-input                       i_uart0_dsr,
-input                       i_uart0_ri,
-input                       i_uart0_dcd,
+    // UART 0 Interface
+    input                       i_uart0_cts,
+    output                      o_uart0_tx,
+    output                      o_uart0_rts,
+    input                       i_uart0_rx,
+    output                      o_uart0_dtr,
+    input                       i_uart0_dsr,
+    input                       i_uart0_ri,
+    input                       i_uart0_dcd,
 
-//
-// LCD interface
-//
-output	[3:0]		    lcd_sf_d,
-output			    lcd_e,
-output			    lcd_rs,
-output			    lcd_rw,
+    //
+    // LCD interface
+    //
+    output	[3:0]		    lcd_sf_d,
+    output			    lcd_e,
+    output			    lcd_rs,
+    output			    lcd_rw,
 
-//
-// SPI
-//
-output  [7:0]               spi_ss,
-output                      spi_clk,
-output                      spi_mosi,
-input                       spi_miso,
+    //
+    // SPI
+    //
+    output  [7:0]               spi_ss,
+    output                      spi_clk,
+    output                      spi_mosi,
+    input                       spi_miso,
 
-//
-// SPDIF
-//
-input                       spdif_rx,
-output                      spdif_tx,
+    //
+    // SPDIF
+    //
+    input                       spdif_rx,
+    output                      spdif_tx,
 
-//
-// I2S
-//
-input                       i2s_rx_sd,
-output                      i2s_rx_sck,
-output                      i2s_rx_ws,
+    //
+    // I2S
+    //
+    input                       i2s_rx_sd,
+    output                      i2s_rx_sck,
+    output                      i2s_rx_ws,
 
-output                      i2s_tx_sd,
-output                      i2s_tx_sck,
-output                      i2s_tx_ws,
+    output                      i2s_tx_sd,
+    output                      i2s_tx_sck,
+    output                      i2s_tx_ws,
 
-inout  [7:0]                gpio
+    inout  [7:0]                gpio
 );
 
 
@@ -118,7 +75,7 @@ localparam WB1_SWIDTH  = 4;
 
 localparam WB2_MASTERS = 2;
 localparam WB2_SLAVES  = 3;
-localparam WB2_DWIDTH  = 32;
+localparam WB2_DWIDTH  = 16;
 localparam WB2_SWIDTH  = 4;
 
 
@@ -179,7 +136,7 @@ wire      [1:0]             s_wb1_bte      [WB1_SLAVES-1:0];
 wire      [2:0]             s_wb1_cti      [WB1_SLAVES-1:0];
 
 // Wishbone 2 Master Buses (20 bit address instruction bus)
-wire      [19:0]            m_wb2_adr      [WB2_MASTERS-1:0];
+wire      [31:0]            m_wb2_adr      [WB2_MASTERS-1:0];
 wire      [WB2_SWIDTH-1:0]  m_wb2_sel      [WB2_MASTERS-1:0];
 wire      [WB2_MASTERS-1:0] m_wb2_we                        ;
 wire      [WB2_DWIDTH-1:0]  m_wb2_dat_w    [WB2_MASTERS-1:0];
@@ -193,7 +150,7 @@ wire      [1:0]             m_wb2_bte      [WB2_MASTERS-1:0];
 wire      [2:0]             m_wb2_cti      [WB2_MASTERS-1:0];
 
 // Wishbone 2 Slave Buses (20 bit address instruction bus)
-wire      [19:0]            s_wb2_adr      [WB2_SLAVES-1:0];
+wire      [31:0]            s_wb2_adr      [WB2_SLAVES-1:0];
 wire      [WB2_SWIDTH-1:0]  s_wb2_sel      [WB2_SLAVES-1:0];
 wire      [WB2_SLAVES-1:0]  s_wb2_we                       ;
 wire      [WB2_DWIDTH-1:0]  s_wb2_dat_w    [WB2_SLAVES-1:0];
@@ -223,7 +180,7 @@ wire dma1_rest;
 wire      [1:0]             ae_irq;
 wire      [1:0]             ae_irqe;
 
-wire      [16:0]            irq_in;
+wire      [31:0]            irq_in;
 
 // In IRQ0
 wire                        uart0_int;
@@ -238,22 +195,36 @@ wire                        dma0_a_int;
 wire                        dma0_b_int;
 wire                        dma1_a_int;
 wire                        dma1_b_int;
+wire			    wb0_exc_be;
+wire                        wb0_exc_wdt;
+wire			    wb1_exc_be;
+wire                        wb1_exc_wdt;
+wire			    wb2_exc_be;
+wire                        wb2_exc_wdt;
 
 assign ae_irqe = 2'd3;      // Assuming active high interrupt enables
 
+// IRQ0
 assign irq_in[0] = uart0_int;
 assign irq_in[1] = spi_int;
 assign irq_in[2] = spdif_rx_int;
 assign irq_in[3] = spdif_tx_int;
 assign irq_in[4] = i2s_rx_int;
 assign irq_in[5] = i2s_tx_int;
-assign irq_in[7:6] = 2'd0;
+assign irq_in[15:6] = 10'd0;
 
-assign irq_in[8]  = dma0_a_int;
-assign irq_in[9]  = dma0_b_int;
-assign irq_in[10] = dma0_a_int;
-assign irq_in[11] = dma0_b_int;
-assign irq_in[15:12] = 4'd0;
+// IRQ1
+assign irq_in[16] = dma0_a_int;
+assign irq_in[17] = dma0_b_int;
+assign irq_in[18] = dma0_a_int;
+assign irq_in[19] = dma0_b_int;
+assign irq_in[20] = wb0_exc_be;
+assign irq_in[21] = wb0_exc_wdt;
+assign irq_in[22] = wb1_exc_be;
+assign irq_in[23] = wb1_exc_wdt;
+assign irq_in[24] = wb2_exc_be;
+assign irq_in[25] = wb2_exc_wdt;
+assign irq_in[31:26] = 6'd0;
 
 // ======================================
 // Clocks and Resets Module
@@ -263,8 +234,7 @@ clocks_resets u_clocks_resets (
     .i_brd_clk_n        ( brd_clk_n         ),  
     .i_brd_clk_p        ( brd_clk_p         ),  
     .o_sys_rst          ( sys_rst           ),
-    .o_sys_clk          ( sys_clk           ),
-    .o_clk_200          ( clk_200           )
+    .o_sys_clk          ( sys_clk           )
 );
                 
 
@@ -323,8 +293,8 @@ wb_dma_top #( 4'h0, // register file address
               4'hf  // Channel 7 Configuration
 )
 u_dma_wb1 (
-    .clk_i ( sys_clk ),
-    .rst_i ( sys_rst ),
+    .clk_i ( wb_clk ),
+    .rst_i ( wb_rst ),
 
     // Wishbone Bus 0 Slave
     .wb0s_data_i ( s_wb0_dat_w[0] ),
@@ -389,6 +359,14 @@ u_dma_wb1 (
 // -------------------------------------------------------------
 // Instantiate DMA Controller (to WB2)
 // -------------------------------------------------------------
+wire [31:0] wb2m1_dat_w;
+wire [31:0] wb2m1_dat_r;
+wire        wb2m1_ack;
+wire [3:0]  wb2m1_sel;
+wire [31:0] wb2m1_adr;
+wire        wb2m1_we;
+wire [31:0] wb2m1_acc_dat;
+wire [31:0] wb2m1_mem_dat;
 
 wb_dma_top #( 4'h1, // register file address
               2'h0, // Number of priorities (1)
@@ -401,8 +379,8 @@ wb_dma_top #( 4'h1, // register file address
               4'hf // Channel 1 Configuration
 )
 u_dma_wb2 (
-    .clk_i ( sys_clk ),
-    .rst_i ( sys_rst ),
+    .clk_i ( wb_clk ),
+    .rst_i ( wb_rst ),
 
     // Wishbone Bus 0 Slave
     .wb0s_data_i ( s_wb0_dat_w[1] ),
@@ -441,18 +419,18 @@ u_dma_wb2 (
     .wb1_rty_o   ( s_wb2_rty  [2] ),
 
     // Wishbone Bus 2 Master
-    .wb1m_data_i ( m_wb2_dat_r[1] ),
-    .wb1m_data_o ( m_wb2_dat_w[1] ),
-    .wb1_addr_o  ( m_wb2_adr  [1] ),
-    .wb1_sel_o   ( m_wb2_sel  [1] ),
-    .wb1_we_o    ( m_wb2_we   [1] ),
+    .wb1m_data_i ( wb2m1_dat_r ),
+    .wb1m_data_o ( wb2m1_dat_w ),
+    .wb1_addr_o  ( wb2m1_adr   ),
+    .wb1_sel_o   ( wb2m1_sel   ),
+    .wb1_we_o    ( wb2m1_we    ),
     .wb1_cyc_o   ( m_wb2_cyc  [1] ),
     .wb1_stb_o   ( m_wb2_stb  [1] ),
-    .wb1_ack_i   ( m_wb2_ack  [1] ),
+    .wb1_ack_i   ( wb2m1_ack      ),
     .wb1_err_i   ( m_wb2_err  [1] ),
     .wb1_rty_i   ( m_wb2_rty  [1] ),
 
-    // DMA Dignals
+    // DMA Signals
     .dma_req_i  ( dma1_req ),
     .dma_ack_o  ( dma1_ack ),
     .dma_nd_i   ( dma1_nd ),
@@ -464,6 +442,35 @@ u_dma_wb2 (
 );
 
 
+//
+// Memory sizer for WB2
+//
+memory_sizer_dual_path u_wb2_sizer (
+    .clk_i ( wb_clk ),
+    .reset_i ( wb_rst ),
+    .sel_i ( wb2m1_sel ),
+    .memory_ack_i ( m_wb2_ack[1] ),
+    .memory_has_be_i ( 1'b1  ),
+    .memory_width_i ( 4'b0010 ),   // All memories are 16-bit
+    .access_width_i ( 4'b0100 ),   // DMA Master is 32-bit
+    .access_big_endian_i ( 1'b0 ),
+    .adr_i ( wb2m1_adr ),
+    .we_i ( wb2m1_we ),
+    .dat_io ( wb2m1_acc_dat ),
+    .memory_dat_io ( wb2m1_mem_dat ),
+    .memory_adr_o ( m_wb2_adr[1] ),
+    .memory_we_o ( m_wb2_we[1] ),
+    .memory_be_o ( m_wb2_sel[1] ),
+    .access_ack_o ( wb2m1_ack ),
+    .exception_be_o ( wb2_exc_be ),
+    .exception_watchdog_o ( wb2_exc_wdt )
+);
+
+assign wb2m1_dat_r    = ~wb2m1_we ? wb2_acc_dat    : 32'bZ;
+assign wb2_acc_dat    =  wb2m1_we ? wb2m1_dat_w    : 32'bZ;
+assign wb2_mem_dat    = ~wb2m1_we ? m_wb2_dat_r[1] : 32'bZ;
+assign m_wb2_dat_w[1] =  wb2m1_we ? wb2_mem_dat    : 32'bZ;
+
 // -------------------------------------------------------------
 // Instantiate 4kx8 Data Memory
 // -------------------------------------------------------------
@@ -474,8 +481,8 @@ block_ram #(
     .SEL_WIDTH ( 1 )
 )
 u_dmem (
-    .wb_clk_i ( sys_clk ),
-    .wb_rst_i ( sys_rst ),
+    .wb_clk_i ( wb_clk ),
+    .wb_rst_i ( wb_rst ),
     .wb_cyc_i ( s_wb0_cyc  [2] ),
     .wb_stb_i ( s_wb0_stb  [2] ),
     .wb_sel_i ( s_wb0_sel  [2] ),
@@ -491,8 +498,8 @@ u_dmem (
 // Instantiate UART0
 // -------------------------------------------------------------
 uart_top u_uart (
-    .wb_clk_i               ( sys_clk        ),
-    .wb_rst_i               ( sys_rst        ),
+    .wb_clk_i               ( wb_clk        ),
+    .wb_rst_i               ( wb_rst        ),
 
     .int_o                  ( uart0_int      ),
     
@@ -524,8 +531,8 @@ wb_lcd u_wb_lcd (
     //
     // I/O Ports
     //
-    .wb_clk_i		( sys_clk ),
-    .wb_rst_i		( sys_rst ),
+    .wb_clk_i		( wb_clk ),
+    .wb_rst_i		( wb_rst ),
 
     //
     // WB slave interface
@@ -556,11 +563,11 @@ rx_spdif #(
     .data_width ( WB0_DWIDTH ),
     .addr_width ( 9 ),  // gives 1kB of buffer
     .ch_st_capture ( 8 ),
-    .wishbone_freq ( 40 )  // Assume a 40MHz sys_clk for now
+    .wishbone_freq ( 40 )  // Assume a 40MHz wb_clk for now
 )
 u_spdif_rx (
-    .wb_clk_i ( sys_clk ),
-    .wb_rst_i ( sys_rst ),
+    .wb_clk_i ( wb_clk ),
+    .wb_rst_i ( wb_rst ),
     .wb_sel_i ( s_wb0_sel  [5] ),
     .wb_stb_i ( s_wb0_stb  [5] ),
     .wb_we_i  ( s_wb0_we   [5] ),
@@ -584,8 +591,8 @@ u_spdif_rx (
 spi_top u_spi
 (
     // Wishbone signals
-    .wb_clk_i ( sys_clk ),
-    .wb_rst_i ( sys_rst ),
+    .wb_clk_i ( wb_clk ),
+    .wb_rst_i ( wb_rst ),
     .wb_adr_i ( s_wb0_adr  [6] ),
     .wb_dat_i ( s_wb0_dat_w[6] ),
     .wb_dat_o ( s_wb0_dat_r[6] ),
@@ -608,8 +615,8 @@ spi_top u_spi
 // Instantiate Interrupt Controller Module
 // -------------------------------------------------------------
 simple_pic u_simple_pic (
-    .clk_i ( sys_clk ),
-    .rst_i ( sys_rst ),
+    .clk_i ( wb_clk ),
+    .rst_i ( wb_rst ),
     .cyc_i ( s_wb0_cyc  [7] ),
     .stb_i ( s_wb0_stb  [7] ),
     .adr_i ( s_wb0_adr  [7] ),
@@ -618,7 +625,7 @@ simple_pic u_simple_pic (
     .dat_o ( s_wb0_dat_r[7] ),
     .ack_o ( s_wb0_ack  [7] ),
     .int_o ( ae_irq ),
-    .irq   ( int_in ) 
+    .irq   ( irq_in ) 
 );
 
 // -------------------------------------------------------------
@@ -629,8 +636,8 @@ rx_i2s_topm #(
     .addr_width ( 9 )  // gives 1kB of buffer
 )
 u_i2s_rx (
-    .wb_clk_i ( sys_clk ),
-    .wb_rst_i ( sys_rst ),
+    .wb_clk_i ( wb_clk ),
+    .wb_rst_i ( wb_rst ),
     .wb_sel_i ( s_wb0_sel  [8] ),
     .wb_stb_i ( s_wb0_stb  [8] ),
     .wb_we_i  ( s_wb0_we   [8] ),
@@ -660,8 +667,8 @@ tx_spdif #(
     .ch_stat_buf ( 1 )
 )
 u_spdif_tx (
-    .wb_clk_i ( sys_clk ),
-    .wb_rst_i ( sys_rst ),
+    .wb_clk_i ( wb_clk ),
+    .wb_rst_i ( wb_rst ),
     .wb_sel_i ( s_wb1_sel  [1] ),
     .wb_stb_i ( s_wb1_stb  [1] ),
     .wb_we_i  ( s_wb1_we   [1] ),
@@ -687,8 +694,8 @@ tx_i2s_topm #(
     .addr_width ( 9 )  // gives 1kB of buffer
 )
 u_i2s_tx (
-    .wb_clk_i  ( sys_clk ),
-    .wb_rst_i  ( sys_rst ),
+    .wb_clk_i  ( wb_clk ),
+    .wb_rst_i  ( wb_rst ),
     .wb_sel_i  ( s_wb1_sel  [2] ),
     .wb_stb_i  ( s_wb1_stb  [2] ),
     .wb_we_i   ( s_wb1_we   [2] ),
@@ -713,8 +720,8 @@ u_i2s_tx (
 // -------------------------------------------------------------
 
 simple_gpio u_gpio(
-    .clk_i ( sys_clk ),
-    .rst_i ( sys_rst ),
+    .clk_i ( wb_clk ),
+    .rst_i ( wb_rst ),
     .cyc_i ( s_wb1_cyc  [3] ),
     .stb_i ( s_wb1_stb  [3] ),
     .adr_i ( s_wb1_adr  [3] ),
@@ -735,8 +742,8 @@ block_ram #(
     .SEL_WIDTH ( 2)
 )
 u_imem (
-    .wb_clk_i ( sys_clk ),
-    .wb_rst_i ( sys_rst ),
+    .wb_clk_i ( wb_clk ),
+    .wb_rst_i ( wb_rst ),
     .wb_cyc_i ( s_wb2_cyc  [0] ),
     .wb_stb_i ( s_wb2_stb  [0] ),
     .wb_sel_i ( s_wb2_sel  [0] ),
@@ -757,8 +764,8 @@ block_ram #(
     .SEL_WIDTH ( 2 )
 )
 u_bmem (
-    .wb_clk_i ( sys_clk ),
-    .wb_rst_i ( sys_rst ),
+    .wb_clk_i ( wb_clk ),
+    .wb_rst_i ( wb_rst ),
     .wb_cyc_i ( s_wb2_cyc  [1] ),
     .wb_stb_i ( s_wb2_stb  [1] ),
     .wb_sel_i ( s_wb2_sel  [1] ),
@@ -899,8 +906,8 @@ intercon0 u_wb0_arb (
     .wb0s8_cyc_i ( s_wb0_cyc  [8] ),
     .wb0s8_stb_i ( s_wb0_stb  [8] ),
     // clock and reset
-    .clk   ( sys_clk ),
-    .reset ( sys_rst )
+    .clk   ( wb_clk ),
+    .reset ( wb_rst )
 );
 
 
@@ -964,8 +971,8 @@ intercon1 u_wb1_arb (
     .wb1s3_cyc_i ( s_wb1_cyc  [3] ),
     .wb1s3_stb_i ( s_wb1_stb  [3] ),
     // clock and reset
-    .clk   ( sys_clk ),
-    .reset ( sys_rst )
+    .clk   ( wb_clk ),
+    .reset ( wb_rst )
 );
 
 
@@ -1026,8 +1033,8 @@ intercon2 u_wb2_arb (
     .wb2s2_cyc_i ( s_wb2_cyc  [2] ),
     .wb2s2_stb_i ( s_wb2_stb  [2] ),
     // clock and reset
-    .clk   ( sys_clk ),
-    .reset ( sys_rst )
+    .clk   ( wb_clk ),
+    .reset ( wb_rst )
 );
 
 
