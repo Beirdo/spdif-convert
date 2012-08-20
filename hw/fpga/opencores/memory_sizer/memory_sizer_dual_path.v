@@ -276,8 +276,8 @@ function [`BYTE_SIZE*N_PP-1:0] byte_reversal;
   integer k;
   begin
     for (k=0; k<N_PP; k=k+1)
-      byte_reversal[`BYTE_SIZE*(N_PP-k)-1:`BYTE_SIZE*(N_PP-k-1)]
-        <= din[`BYTE_SIZE*(k+1)-1:`BYTE_SIZE*k];
+      byte_reversal[`BYTE_SIZE*(N_PP-k)-1 -: `BYTE_SIZE] =
+        din[`BYTE_SIZE*(k+1)-1 -: `BYTE_SIZE];
   end
 endfunction
 
@@ -405,8 +405,8 @@ begin: BYTE_LATCHES
   begin
     for (i=0;i<N_PP;i=i+1)
     begin
-      if (latch_be[i]) latched_read_dat[`BYTE_SIZE*(i+1)-1:`BYTE_SIZE*i]
-                       <= rd_steer_dat_o[`BYTE_SIZE*(i+1)-1:`BYTE_SIZE*i];
+      if (latch_be[i]) latched_read_dat[`BYTE_SIZE*(i+1)-1 -: `BYTE_SIZE]
+                       <= rd_steer_dat_o[`BYTE_SIZE*(i+1)-1 -: `BYTE_SIZE];
     end
   end
 end
@@ -424,10 +424,10 @@ begin: LATCH_BYPASS
   for (j=0;j<N_PP;j=j+1)
   begin
     if (terminal_count && latch_be[j]) 
-         read_dat[`BYTE_SIZE*(j+1)-1:`BYTE_SIZE*j] 
-         <= rd_steer_dat_o[`BYTE_SIZE*(j+1)-1:`BYTE_SIZE*j];
-    else read_dat[`BYTE_SIZE*(j+1)-1:`BYTE_SIZE*j]
-         <= latched_read_dat[`BYTE_SIZE*(j+1)-1:`BYTE_SIZE*j];
+         read_dat[`BYTE_SIZE*(j+1)-1 -: `BYTE_SIZE] 
+         <= rd_steer_dat_o[`BYTE_SIZE*(j+1)-1 -: `BYTE_SIZE];
+    else read_dat[`BYTE_SIZE*(j+1)-1 -: `BYTE_SIZE]
+         <= latched_read_dat[`BYTE_SIZE*(j+1)-1 -: `BYTE_SIZE];
   end
 end
 
