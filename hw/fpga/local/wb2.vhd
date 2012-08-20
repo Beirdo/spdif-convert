@@ -118,20 +118,20 @@ entity intercon2 is
   port (
   -- wishbone master port(s)
   -- wb2m0
-  wb2m0_dat_i : out std_logic_vector(31 downto 0);
+  wb2m0_dat_i : out std_logic_vector(15 downto 0);
   wb2m0_ack_i : out std_logic;
-  wb2m0_dat_o : in  std_logic_vector(31 downto 0);
+  wb2m0_dat_o : in  std_logic_vector(15 downto 0);
   wb2m0_we_o  : in  std_logic;
   wb2m0_sel_o : in  std_logic_vector(3 downto 0);
   wb2m0_adr_o : in  std_logic_vector(31 downto 0);
   wb2m0_cyc_o : in  std_logic;
   wb2m0_stb_o : in  std_logic;
   -- wb2m1
-  wb2m1_dat_i : out std_logic_vector(31 downto 0);
+  wb2m1_dat_i : out std_logic_vector(15 downto 0);
   wb2m1_ack_i : out std_logic;
   wb2m1_err_i : out std_logic;
   wb2m1_rty_i : out std_logic;
-  wb2m1_dat_o : in  std_logic_vector(31 downto 0);
+  wb2m1_dat_o : in  std_logic_vector(15 downto 0);
   wb2m1_we_o  : in  std_logic;
   wb2m1_sel_o : in  std_logic_vector(3 downto 0);
   wb2m1_adr_o : in  std_logic_vector(31 downto 0);
@@ -139,29 +139,29 @@ entity intercon2 is
   wb2m1_stb_o : in  std_logic;
   -- wishbone slave port(s)
   -- wb2s0
-  wb2s0_dat_o : in  std_logic_vector(31 downto 0);
+  wb2s0_dat_o : in  std_logic_vector(15 downto 0);
   wb2s0_ack_o : in  std_logic;
-  wb2s0_dat_i : out std_logic_vector(31 downto 0);
+  wb2s0_dat_i : out std_logic_vector(15 downto 0);
   wb2s0_we_i  : out std_logic;
   wb2s0_sel_i : out std_logic_vector(3 downto 0);
   wb2s0_adr_i : out std_logic_vector(31 downto 0);
   wb2s0_cyc_i : out std_logic;
   wb2s0_stb_i : out std_logic;
   -- wb2s1
-  wb2s1_dat_o : in  std_logic_vector(31 downto 0);
+  wb2s1_dat_o : in  std_logic_vector(15 downto 0);
   wb2s1_ack_o : in  std_logic;
-  wb2s1_dat_i : out std_logic_vector(31 downto 0);
+  wb2s1_dat_i : out std_logic_vector(15 downto 0);
   wb2s1_we_i  : out std_logic;
   wb2s1_sel_i : out std_logic_vector(3 downto 0);
-  wb2s1_adr_i : out std_logic_vector(16 downto 0);
+  wb2s1_adr_i : out std_logic_vector(31 downto 0);
   wb2s1_cyc_i : out std_logic;
   wb2s1_stb_i : out std_logic;
   -- wb2s2
-  wb2s2_dat_o : in  std_logic_vector(31 downto 0);
+  wb2s2_dat_o : in  std_logic_vector(15 downto 0);
   wb2s2_ack_o : in  std_logic;
   wb2s2_err_o : in  std_logic;
   wb2s2_rty_o : in  std_logic;
-  wb2s2_dat_i : out std_logic_vector(31 downto 0);
+  wb2s2_dat_i : out std_logic_vector(15 downto 0);
   wb2s2_we_i  : out std_logic;
   wb2s2_sel_i : out std_logic_vector(3 downto 0);
   wb2s2_adr_i : out std_logic_vector(31 downto 0);
@@ -259,14 +259,14 @@ wb2s2_ss <= '1' when adr(31 downto 6)="11100000000000000000000000" else
 '1' when adr(31 downto 30)="10" else
 '0';
 wb2s0_adr_i <= adr(31 downto 0);
-wb2s1_adr_i <= adr(16 downto 0);
+wb2s1_adr_i <= adr(31 downto 0);
 wb2s2_adr_i <= adr(31 downto 0);
 end block decoder;
 
 mux: block
   signal cyc, stb, we, ack : std_logic;
   signal sel : std_logic_vector(3 downto 0);
-  signal dat_m2s, dat_s2m : std_logic_vector(31 downto 0);
+  signal dat_m2s, dat_s2m : std_logic_vector(15 downto 0);
 begin
 cyc <= (wb2m0_cyc_o and wb2m0_bg) or (wb2m1_cyc_o and wb2m1_bg);
 wb2s0_cyc_i <= wb2s0_ss and cyc;

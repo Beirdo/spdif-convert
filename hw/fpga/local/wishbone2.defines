@@ -16,7 +16,7 @@ rename_tgc=cti
 rename_tgd=tgd
 classic=000
 endofburst=111
-dat_size=32
+dat_size=16
 adr_size=32
 mux_type=andor
 interconnect=sharedbus
@@ -36,7 +36,7 @@ end master wb2m0
 
 master wb2m1
   type=rw
-  dat_size=32
+  dat_size=16
   adr_size=32
   lock_o=0
   tga_o=0
@@ -68,8 +68,8 @@ end slave wb2s0
 
 slave wb2s1
   type=rw
-  dat_size=32
-  adr_i_hi=16
+  dat_size=16
+  adr_i_hi=31
   adr_i_lo=0
   tga_i=0
   tgc_i=0
@@ -87,7 +87,7 @@ end slave wb2s1
 
 slave wb2s2
   type=rw
-  dat_size=32
+  dat_size=16
   adr_i_hi=31
   adr_i_lo=0
   tga_i=0
