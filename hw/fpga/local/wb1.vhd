@@ -2,22 +2,16 @@
 --
 -- For defines see wishbone1.defines
 --
--- Generated Sat Aug 18 22:08:40 2012
+-- Generated Tue Aug 21 00:33:11 2012
 --
 -- Wishbone masters:
 --   wb1m0
 --
 -- Wishbone slaves:
 --   wb1s0
---     baseadr 0x00000000 - size 0x80000000
---     baseadr 0x80000000 - size 0x00000080
---     baseadr 0xC0000000 - size 0x40000000
+--     baseadr 0x0000 - size 0x8000
 --   wb1s1
---     baseadr 0x90000000 - size 0x00001000
---   wb1s2
---     baseadr 0xA0000000 - size 0x00001000
---   wb1s3
---     baseadr 0xB0000000 - size 0x00000004
+--     baseadr 0x8000 - size 0x2000
 -----------------------------------------------------------------------------------------
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -48,7 +42,7 @@ end intercon1_package;
 library IEEE;
 use IEEE.std_logic_1164.all;
 
-entity trafic_supervision1 is
+entity trafic_supervision is
 
   generic (
     priority     : integer := 1;
@@ -61,9 +55,9 @@ entity trafic_supervision1 is
     clk          : in  std_logic;
     reset        : in  std_logic);
 
-end trafic_supervision1;
+end trafic_supervision;
 
-architecture rtl of trafic_supervision1 is
+architecture rtl of trafic_supervision is
 
   signal shreg : std_logic_vector(tot_priority-1 downto 0);
   signal cntr : integer range 0 to tot_priority;
@@ -119,131 +113,79 @@ entity intercon1 is
   port (
   -- wishbone master port(s)
   -- wb1m0
-  wb1m0_dat_i : out std_logic_vector(31 downto 0);
+  wb1m0_dat_i : out std_logic_vector(15 downto 0);
   wb1m0_ack_i : out std_logic;
-  wb1m0_err_i : out std_logic;
-  wb1m0_rty_i : out std_logic;
-  wb1m0_dat_o : in  std_logic_vector(31 downto 0);
+  wb1m0_dat_o : in  std_logic_vector(15 downto 0);
   wb1m0_we_o  : in  std_logic;
-  wb1m0_sel_o : in  std_logic_vector(3 downto 0);
-  wb1m0_adr_o : in  std_logic_vector(31 downto 0);
+  wb1m0_sel_o : in  std_logic_vector(1 downto 0);
+  wb1m0_adr_o : in  std_logic_vector(15 downto 0);
   wb1m0_cyc_o : in  std_logic;
   wb1m0_stb_o : in  std_logic;
   -- wishbone slave port(s)
   -- wb1s0
-  wb1s0_dat_o : in  std_logic_vector(31 downto 0);
+  wb1s0_dat_o : in  std_logic_vector(15 downto 0);
   wb1s0_ack_o : in  std_logic;
-  wb1s0_err_o : in  std_logic;
-  wb1s0_rty_o : in  std_logic;
-  wb1s0_dat_i : out std_logic_vector(31 downto 0);
+  wb1s0_dat_i : out std_logic_vector(15 downto 0);
   wb1s0_we_i  : out std_logic;
-  wb1s0_sel_i : out std_logic_vector(3 downto 0);
-  wb1s0_adr_i : out std_logic_vector(31 downto 0);
+  wb1s0_sel_i : out std_logic_vector(1 downto 0);
+  wb1s0_adr_i : out std_logic_vector(15 downto 0);
   wb1s0_cyc_i : out std_logic;
   wb1s0_stb_i : out std_logic;
   -- wb1s1
-  wb1s1_dat_o : in  std_logic_vector(31 downto 0);
+  wb1s1_dat_o : in  std_logic_vector(15 downto 0);
   wb1s1_ack_o : in  std_logic;
-  wb1s1_dat_i : out std_logic_vector(31 downto 0);
+  wb1s1_dat_i : out std_logic_vector(15 downto 0);
   wb1s1_we_i  : out std_logic;
-  wb1s1_sel_i : out std_logic_vector(3 downto 0);
-  wb1s1_adr_i : out std_logic_vector(31 downto 2);
-  wb1s1_cti_i : out std_logic_vector(2 downto 0);
-  wb1s1_bte_i : out std_logic_vector(1 downto 0);
+  wb1s1_sel_i : out std_logic_vector(1 downto 0);
+  wb1s1_adr_i : out std_logic_vector(15 downto 0);
   wb1s1_cyc_i : out std_logic;
   wb1s1_stb_i : out std_logic;
-  -- wb1s2
-  wb1s2_dat_o : in  std_logic_vector(31 downto 0);
-  wb1s2_ack_o : in  std_logic;
-  wb1s2_dat_i : out std_logic_vector(31 downto 0);
-  wb1s2_we_i  : out std_logic;
-  wb1s2_sel_i : out std_logic_vector(3 downto 0);
-  wb1s2_adr_i : out std_logic_vector(31 downto 2);
-  wb1s2_cti_i : out std_logic_vector(2 downto 0);
-  wb1s2_bte_i : out std_logic_vector(1 downto 0);
-  wb1s2_cyc_i : out std_logic;
-  wb1s2_stb_i : out std_logic;
-  -- wb1s3
-  wb1s3_dat_o : in  std_logic_vector(31 downto 0);
-  wb1s3_ack_o : in  std_logic;
-  wb1s3_dat_i : out std_logic_vector(31 downto 0);
-  wb1s3_we_i  : out std_logic;
-  wb1s3_sel_i : out std_logic_vector(3 downto 0);
-  wb1s3_adr_i : out std_logic_vector(31 downto 0);
-  wb1s3_cyc_i : out std_logic;
-  wb1s3_stb_i : out std_logic;
   -- clock and reset
   clk   : in std_logic;
   reset : in std_logic);
 end intercon1;
 architecture rtl of intercon1 is
-  signal wb1m0_bg : std_logic; -- bus grant
+  signal wb1m0_bg : std_logic; -- master bus grant
   signal wb1s0_ss : std_logic; -- slave select
   signal wb1s1_ss : std_logic; -- slave select
-  signal wb1s2_ss : std_logic; -- slave select
-  signal wb1s3_ss : std_logic; -- slave select
 begin  -- rtl
 decoder:block
-  signal adr : std_logic_vector(31 downto 0);
+  signal adr : std_logic_vector(15 downto 0);
 begin
+wb1m0_bg <= '1';
 adr <= (wb1m0_adr_o and wb1m0_bg);
-wb1s0_ss <= '1' when adr(31 downto 31)="0" else
-'1' when adr(31 downto 7)="1000000000000000000000000" else
-'1' when adr(31 downto 30)="11" else
+wb1s0_ss <= '1' when adr(15 downto 15)="0" else
 '0';
-wb1s1_ss <= '1' when adr(31 downto 12)="10010000000000000000" else
+wb1s1_ss <= '1' when adr(15 downto 13)="100" else
 '0';
-wb1s2_ss <= '1' when adr(31 downto 12)="10100000000000000000" else
-'0';
-wb1s3_ss <= '1' when adr(31 downto 2)="101100000000000000000000000000" else
-'0';
-wb1s0_adr_i <= adr(31 downto 0);
-wb1s1_adr_i <= adr(31 downto 2);
-wb1s2_adr_i <= adr(31 downto 2);
-wb1s3_adr_i <= adr(31 downto 0);
+wb1s0_adr_i <= adr(15 downto 0);
+wb1s1_adr_i <= adr(15 downto 0);
 end block decoder;
 
 mux: block
   signal cyc, stb, we, ack : std_logic;
-  signal sel : std_logic_vector(3 downto 0);
-  signal dat_m2s, dat_s2m : std_logic_vector(31 downto 0);
+  signal sel : std_logic_vector(1 downto 0);
+  signal dat_m2s, dat_s2m : std_logic_vector(15 downto 0);
 begin
 cyc <= (wb1m0_cyc_o and wb1m0_bg);
 wb1s0_cyc_i <= wb1s0_ss and cyc;
 wb1s1_cyc_i <= wb1s1_ss and cyc;
-wb1s2_cyc_i <= wb1s2_ss and cyc;
-wb1s3_cyc_i <= wb1s3_ss and cyc;
 stb <= (wb1m0_stb_o and wb1m0_bg);
 wb1s0_stb_i <= stb;
 wb1s1_stb_i <= stb;
-wb1s2_stb_i <= stb;
-wb1s3_stb_i <= stb;
 we <= (wb1m0_we_o and wb1m0_bg);
 wb1s0_we_i <= we;
 wb1s1_we_i <= we;
-wb1s2_we_i <= we;
-wb1s3_we_i <= we;
-wb1m0_bg <= '1';
-ack <= wb1s0_ack_o or wb1s1_ack_o or wb1s2_ack_o or wb1s3_ack_o;
+ack <= wb1s0_ack_o or wb1s1_ack_o;
 wb1m0_ack_i <= ack and wb1m0_bg;
-wb1m0_rty_i <= wb1s0_rty_o;
-wb1m0_err_i <= wb1s0_err_o;
 sel <= (wb1m0_sel_o and wb1m0_bg);
 wb1s0_sel_i <= sel;
 wb1s1_sel_i <= sel;
-wb1s2_sel_i <= sel;
-wb1s3_sel_i <= sel;
 dat_m2s <= (wb1m0_dat_o and wb1m0_bg);
 wb1s0_dat_i <= dat_m2s;
 wb1s1_dat_i <= dat_m2s;
-wb1s2_dat_i <= dat_m2s;
-wb1s3_dat_i <= dat_m2s;
-dat_s2m <= (wb1s0_dat_o and wb1s0_ss) or (wb1s1_dat_o and wb1s1_ss) or (wb1s2_dat_o and wb1s2_ss) or (wb1s3_dat_o and wb1s3_ss);
+dat_s2m <= (wb1s0_dat_o and wb1s0_ss) or (wb1s1_dat_o and wb1s1_ss);
 wb1m0_dat_i <= dat_s2m;
-wb1s1_cti_i <= (others=>'0');
-wb1s2_cti_i <= (others=>'0');
-wb1s1_bte_i <= (others=>'0');
-wb1s2_bte_i <= (others=>'0');
 end block mux;
 
 end rtl;

@@ -79,7 +79,15 @@ entity tx_i2s_topm is
       -- I2S signals
       i2s_sd_o  : out std_logic;
       i2s_sck_o : out std_logic;
-      i2s_ws_o  : out std_logic);
+      i2s_ws_o  : out std_logic;
+      -- DMA RAM Bus
+      dma_clk_i  : in  std_logic;
+      dma_en_i   : in  std_logic;
+      dma_we_i   : in  std_logic_vector(0 downto 0);
+      dma_adr_i  : in  std_logic_vector(6 downto 0);
+      dma_dat_i  : in  std_logic_vector(127 downto 0);
+      dma_dat_o  : out std_logic_vector(127 downto 0)
+);
 end tx_i2s_topm;
 
 architecture rtl of tx_i2s_topm is
@@ -232,19 +240,38 @@ begin
    intstat_events(DATA_WIDTH - 1 downto 2) <= (others => '0');
 
 -- Sample buffer memory
-   MEM : dpram
-      generic map (
-         DATA_WIDTH => DATA_WIDTH,
-         RAM_WIDTH  => ADDR_WIDTH - 1)
+   DMAMEM : bufmem_512x32
       port map (
-         clk     => wb_clk_i,
-         rst     => wb_rst_i,
-         din     => wb_dat_i(DATA_WIDTH - 1 downto 0),
-         wr_en   => mem_wr,
-         rd_en   => mem_rd,
-         wr_addr => wb_adr_i(ADDR_WIDTH - 2 downto 0),
-         rd_addr => sample_addr,
-         dout    => sample_data);
+         clka    => wb_clk_i,
+         rsta    => wb_rst_i,
+         ena     => mem_rd,
+         wea     => "0",
+         addra   => '0' & sample_addr,
+         dina    => (others => '0'),
+         douta   => sample_data,
+
+         clkb    => wb_clk_i,
+         rstb    => wb_rst_i,
+         enb     => dma_en_i,
+         web     => dma_we_i,
+         addrb   => dma_adr_i,
+         dinb    => dma_dat_i,
+         doutb   => dma_dat_o
+      );
+
+--   MEM : dpram
+--      generic map (
+--         DATA_WIDTH => DATA_WIDTH,
+--         RAM_WIDTH  => ADDR_WIDTH - 1)
+--      port map (
+--         clk     => wb_clk_i,
+--         rst     => wb_rst_i,
+--         din     => wb_dat_i(DATA_WIDTH - 1 downto 0),
+--         wr_en   => mem_wr,
+--         rd_en   => mem_rd,
+--         wr_addr => wb_adr_i(ADDR_WIDTH - 2 downto 0),
+--         rd_addr => sample_addr,
+--         dout    => sample_data);
 
 -- Transmit encoder
    zero <= '0';

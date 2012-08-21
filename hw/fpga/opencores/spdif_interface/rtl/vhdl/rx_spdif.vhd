@@ -91,7 +91,15 @@ entity rx_spdif is
       -- Interrupt line
       rx_int_o   : out std_logic;
       -- SPDIF input signal
-      spdif_rx_i : in  std_logic);
+      spdif_rx_i : in  std_logic;
+      -- DMA RAM Bus
+      dma_clk_i  : in  std_logic;
+      dma_en_i   : in  std_logic;
+      dma_we_i   : in  std_logic_vector(0 downto 0);
+      dma_adr_i  : in  std_logic_vector(6 downto 0);
+      dma_dat_i  : in  std_logic_vector(127 downto 0);
+      dma_dat_o  : out std_logic_vector(127 downto 0)
+);
 end rx_spdif;
 
 architecture rtl of rx_spdif is
@@ -329,6 +337,25 @@ begin
    end generate GCAP;
 
 -- Sample buffer memory
+   DMAMEM : bufmem_512x32
+      port map (
+         clka    => wb_clk_i,
+         rsta    => wb_rst_i,
+         ena     => mem_rd,
+         wea     => (0 => sample_wr),
+         addra   => '0' & sbuf_wr_adr,
+         dina    => sample_din,
+         douta   => open,
+
+         clkb    => wb_clk_i,
+         rstb    => wb_rst_i,
+         enb     => dma_en_i,
+         web     => dma_we_i,
+         addrb   => dma_adr_i,
+         dinb    => dma_dat_i,
+         doutb   => dma_dat_o
+      );
+
    MEM : dpram
       generic map (
          DATA_WIDTH => DATA_WIDTH,
