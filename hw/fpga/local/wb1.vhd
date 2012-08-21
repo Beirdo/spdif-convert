@@ -17,7 +17,7 @@
 --   wb1s2
 --     baseadr 0xA0000000 - size 0x00001000
 --   wb1s3
---     baseadr 0xB0000000 - size 0x00000002
+--     baseadr 0xB0000000 - size 0x00000004
 -----------------------------------------------------------------------------------------
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -195,7 +195,7 @@ wb1s1_ss <= '1' when adr(31 downto 12)="10010000000000000000" else
 '0';
 wb1s2_ss <= '1' when adr(31 downto 12)="10100000000000000000" else
 '0';
-wb1s3_ss <= '1' when adr(31 downto 1)="1011000000000000000000000000000" else
+wb1s3_ss <= '1' when adr(31 downto 2)="101100000000000000000000000000" else
 '0';
 wb1s0_adr_i <= adr(31 downto 0);
 wb1s1_adr_i <= adr(31 downto 2);

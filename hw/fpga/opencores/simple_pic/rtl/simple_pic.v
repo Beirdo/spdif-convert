@@ -165,10 +165,11 @@ module simple_pic(
   wire  [REG_WIDTH-1:0] irqs [BANKS-1:0]; // interrupt request inputs
 
   genvar j; 
-  for (j=0; j<BANKS; j=j+1)
+  generate for (j=0; j<BANKS; j=j+1)
   begin : irqsplit
     assign irqs[j] = irq[REG_WIDTH*j+(REG_WIDTH-1):REG_WIDTH*j];
   end
+  endgenerate
 
   //
   //  Module body

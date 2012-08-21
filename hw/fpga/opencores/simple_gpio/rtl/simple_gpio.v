@@ -92,7 +92,7 @@
 
 module simple_gpio(
   clk_i, rst_i, cyc_i, stb_i, adr_i, we_i, dat_i, dat_o, ack_o,
-  gpio
+  gpio, ibase, rst_o
 );
 
   //
@@ -105,7 +105,7 @@ module simple_gpio(
   input         rst_i;         // reset (asynchronous active low)
   input         cyc_i;         // cycle
   input         stb_i;         // strobe
-  input         adr_i;         // address adr_i[1]
+  input  [ 1:0] adr_i;         // address adr_i[1]
   input         we_i;          // write enable
   input  [ 7:0] dat_i;         // data output
   output [ 7:0] dat_o;         // data input
@@ -113,12 +113,17 @@ module simple_gpio(
 
   // GPIO pins
   inout  [io:1] gpio;
+  output [ 7:0] ibase;
+  output        rst_o;
 
   //
   // Module body
   //
   reg [io:1] ctrl, line;                  // ControlRegister, LineRegister
   reg [io:1] lgpio, llgpio;               // LatchedGPIO pins
+
+  reg [ 7:0] instr_base      = 8'hC0;     // Instruction base register
+  reg [ 7:0] prev_instr_base = 8'hC0;     // Previous Instruction base register
 
   //
   // perform parameter checks
@@ -138,24 +143,38 @@ module simple_gpio(
   wire wb_wr  = wb_acc & we_i;            // WISHBONE write access
 
   always @(posedge clk_i or negedge rst_i)
-    if (~rst_i)
-      begin
-          ctrl <= #1 {{io}{1'b0}};
-          line <= #1 {{io}{1'b0}};
-      end
-    else if (wb_wr)
-       if ( adr_i )
-         line <= #1 dat_i[io-1:0];
-       else
-         ctrl <= #1 dat_i[io-1:0];
+      if (~rst_i)
+        begin
+            ctrl <= #1 {{io}{1'b0}};
+            line <= #1 {{io}{1'b0}};
+        end
+      else if (wb_wr)
+         case (adr_i) // synopsys full_case parallel_case
+           2'b00:  ctrl <= #1 dat_i[io-1:0];
+           2'b01:  line <= #1 dat_i[io-1:0];
+           2'b10:  
+             begin
+               prev_instr_base <= instr_base;
+               instr_base <= #1 dat_i[7:0];
+             end
+           2'b11: ;
+         endcase
 
+  reg ibase_changed;
+  always @(posedge clk_i or negedge rst_i)
+    if (~rst_i)
+      ibase_changed <= #1 0;
+    else
+      ibase_changed <= #1 (instr_base != prev_instr_base);
 
   reg [7:0] dat_o;
   always @(posedge clk_i)
-    if ( adr_i )
-      dat_o <= #1 { {{8-io}{1'b0}}, llgpio};
-    else
-      dat_o <= #1 { {{8-io}{1'b0}}, ctrl};
+    case (adr_i) // synopsys full_case parallel_case
+      2'b00:  dat_o <= #1 { {{8-io}{1'b0}}, ctrl};
+      2'b01:  dat_o <= #1 { {{8-io}{1'b0}}, llgpio};
+      2'b10:  dat_o <= #1 instr_base;
+      2'b11: ;
+    endcase
 
   reg ack_o;
   always @(posedge clk_i or negedge rst_i)
@@ -164,6 +183,13 @@ module simple_gpio(
     else
       ack_o <= #1 wb_acc & !ack_o;
 
+
+  reg rst_o;
+  always @ (negedge clk_i or negedge rst_i)
+    if (~rst_i)
+      rst_o <= #1 1'b0;
+    else
+      rst_o <= #1 ibase_changed;
 
   //
   // GPIO section
@@ -185,6 +211,8 @@ module simple_gpio(
       igpio[n] <= ctrl[n] ? line[n] : 1'bz;
 
   assign gpio = igpio;
+
+  assign ibase = instr_base;
 
 endmodule
 

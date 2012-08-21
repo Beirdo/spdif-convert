@@ -22,7 +22,10 @@ module block_ram
     wire [ADDR_WIDTH-1:0]   address;
     reg  [7:0]              read_data [SEL_WIDTH-1:0];
     wire [7:0]              write_data [SEL_WIDTH-1:0];
+    wire [DATA_WIDTH-1:0]   byte_enable;
     wire                    clock;
+    wire   [DATA_WIDTH-1:0] masked_read_data;
+
 
     assign clock = wb_clk_i;
 
@@ -47,7 +50,6 @@ module block_ram
 
     wire                    start_write;
     wire                    start_read;
-    wire [DATA_WIDTH-1:0]   byte_enable;
     wire [SEL_WIDTH-1:0]    mask_address;
 
 
@@ -60,8 +62,6 @@ module block_ram
     end
 
     assign byte_enable = wb_sel_i;
-    wire   [DATA_WIDTH-1:0] masked_read_data;
-
 
     assign wb_dat_o    = masked_read_data;
     assign address     = wb_adr_i[ADDR_WIDTH+SEL_WIDTH-2:SEL_WIDTH-1];

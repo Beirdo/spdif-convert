@@ -17,10 +17,10 @@ module system
     //
     // LCD interface
     //
-    output	[3:0]		    lcd_sf_d,
-    output			    lcd_e,
-    output			    lcd_rs,
-    output			    lcd_rw,
+    output	[3:0]		lcd_sf_d,
+    output			lcd_e,
+    output			lcd_rs,
+    output			lcd_rw,
 
     //
     // SPI
@@ -54,7 +54,8 @@ module system
 wire            sys_clk;    // System clock
 wire            sys_rst;    // Active low reset, synchronous to sys_clk
 wire            clk_200;    // 200MHz from board
-
+wire            int_rst;    // internally triggered reset (ibase change)
+wire [7:0]      instr_base; // Top 8 bits of the instruction bus to use
 
 // ======================================
 // Wishbone Buses
@@ -216,8 +217,8 @@ assign irq_in[15:6] = 10'd0;
 // IRQ1
 assign irq_in[16] = dma0_a_int;
 assign irq_in[17] = dma0_b_int;
-assign irq_in[18] = dma0_a_int;
-assign irq_in[19] = dma0_b_int;
+assign irq_in[18] = dma1_a_int;
+assign irq_in[19] = dma1_b_int;
 assign irq_in[20] = wb0_exc_be;
 assign irq_in[21] = wb0_exc_wdt;
 assign irq_in[22] = wb1_exc_be;
@@ -229,8 +230,11 @@ assign irq_in[31:26] = 6'd0;
 // ======================================
 // Clocks and Resets Module
 // ======================================
+wire rst_in;
+assign rst_in = brd_rst | int_rst;
+
 clocks_resets u_clocks_resets (
-    .i_brd_rst          ( brd_rst           ),
+    .i_brd_rst          ( rst_in            ),
     .i_brd_clk_n        ( brd_clk_n         ),  
     .i_brd_clk_p        ( brd_clk_p         ),  
     .o_sys_rst          ( sys_rst           ),
@@ -246,7 +250,7 @@ ae18_core u_ae18 (
     .wb_rst_o ( wb_rst ),
 
     // Instruction bus
-    .iwb_adr_o ( m_wb2_adr  [0] ),
+    .iwb_adr_o ( m_wb2_adr  [0][23:0] ),
     .iwb_dat_i ( m_wb2_dat_w[0] ),
     .iwb_dat_o ( m_wb2_dat_r[0] ),
     .iwb_stb_o ( m_wb2_stb  [0] ),
@@ -269,7 +273,8 @@ ae18_core u_ae18 (
     .rst_i  ( sys_rst )
 );
 
-assign m_wb0_sel[0] = 4'd1;	// Always selected, only 8bits wide
+assign m_wb0_sel[0] = 4'd1;              // Always selected, only 8bits wide
+assign m_wb2_adr[0][31:24] = instr_base; // set the top 8 bits from the base reg
 
 
 // -------------------------------------------------------------
@@ -466,10 +471,10 @@ memory_sizer_dual_path u_wb2_sizer (
     .exception_watchdog_o ( wb2_exc_wdt )
 );
 
-assign wb2m1_dat_r    = ~wb2m1_we ? wb2_acc_dat    : 32'bZ;
-assign wb2_acc_dat    =  wb2m1_we ? wb2m1_dat_w    : 32'bZ;
-assign wb2_mem_dat    = ~wb2m1_we ? m_wb2_dat_r[1] : 32'bZ;
-assign m_wb2_dat_w[1] =  wb2m1_we ? wb2_mem_dat    : 32'bZ;
+assign wb2m1_dat_r    = ~wb2m1_we ? wb2m1_acc_dat    : 32'bZ;
+assign wb2m1_acc_dat  =  wb2m1_we ? wb2m1_dat_w    : 32'bZ;
+assign wb2m1_mem_dat  = ~wb2m1_we ? m_wb2_dat_r[1] : 32'bZ;
+assign m_wb2_dat_w[1] =  wb2m1_we ? wb2m1_mem_dat    : 32'bZ;
 
 // -------------------------------------------------------------
 // Instantiate 4kx8 Data Memory
@@ -720,16 +725,18 @@ u_i2s_tx (
 // -------------------------------------------------------------
 
 simple_gpio u_gpio(
-    .clk_i ( wb_clk ),
-    .rst_i ( wb_rst ),
-    .cyc_i ( s_wb1_cyc  [3] ),
-    .stb_i ( s_wb1_stb  [3] ),
-    .adr_i ( s_wb1_adr  [3] ),
-    .we_i  ( s_wb1_we   [3] ),
-    .dat_i ( s_wb1_dat_w[3] ),
-    .dat_o ( s_wb1_dat_r[3] ),
-    .ack_o ( s_wb1_ack  [3] ),
-    .gpio  ( gpio )
+    .clk_i   ( wb_clk ),
+    .rst_i   ( wb_rst ),
+    .cyc_i   ( s_wb1_cyc  [3] ),
+    .stb_i   ( s_wb1_stb  [3] ),
+    .adr_i   ( s_wb1_adr  [3] ),
+    .we_i    ( s_wb1_we   [3] ),
+    .dat_i   ( s_wb1_dat_w[3] ),
+    .dat_o   ( s_wb1_dat_r[3] ),
+    .ack_o   ( s_wb1_ack  [3] ),
+    .gpio    ( gpio ),
+    .ibase   ( instr_base ),
+    .rst_o   ( int_rst )
 );
 
 // -------------------------------------------------------------

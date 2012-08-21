@@ -103,7 +103,7 @@ slave wb1s3
   err_o=0
   rty_o=0
   baseadr=0xB0000000
-  size=0x00000002
+  size=0x00000004
   baseadr1=0x00000000
   size1=0x0
   baseadr2=0x00000000
