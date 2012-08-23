@@ -1,0 +1,10 @@
+*.asy
+*.gise
+*.vhd
+*.vho
+*.xise
+bufmem_1024x32/
+bufmem_512x32/
+*_flist.txt
+*_xmdf.tcl
+*.log
