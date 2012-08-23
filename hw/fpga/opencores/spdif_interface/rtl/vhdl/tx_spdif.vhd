@@ -121,6 +121,7 @@ architecture rtl of tx_spdif is
    signal user_data_a, user_data_b                              : std_logic_vector(191 downto 0);
    signal ch_stat_a, ch_stat_b                                  : std_logic_vector(191 downto 0);
 
+
 begin
 
 -- Data bus or'ing 
@@ -312,7 +313,7 @@ begin
          rsta    => wb_rst_i,
          ena     => mem_rd,
          wea     => "0",
-         addra   => '0' & sample_addr,
+         addra   => sample_addr,
          dina    => (others => '0'),
          douta   => sample_data,
 

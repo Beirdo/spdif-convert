@@ -72,6 +72,9 @@ localparam WB1_DWIDTH  = 16;
 localparam WB1_SWIDTH  = 2;
 localparam WB1_AWIDTH  = 16;
 
+localparam DMA_DEVICES = 4;
+localparam DMA_AWIDTH  = 7;
+localparam DMA_DWIDTH  = 128;
 
 // Wishbone 0 Master Buses
 wire      [WB0_AWIDTH-1:0]  m_wb0_adr      [WB0_MASTERS-1:0];
@@ -128,6 +131,12 @@ wire      [WB1_SLAVES-1:0]  s_wb1_err                      ;
 wire      [WB1_SLAVES-1:0]  s_wb1_rty                      ;
 wire      [1:0]             s_wb1_bte      [WB0_SLAVES-1:0];
 wire      [2:0]             s_wb1_cti      [WB0_SLAVES-1:0];
+
+wire      [DMA_DEVICES-1:0] dma_en;
+wire      [DMA_DEVICES-1:0] dma_we;
+wire      [DMA_AWIDTH-1:0]  dma_adr        [DMA_DEVICES-1:0];
+wire      [DMA_DWIDTH-1:0]  dma_dat_w      [DMA_DEVICES-1:0];
+wire      [DMA_DWIDTH-1:0]  dma_dat_r      [DMA_DEVICES-1:0];
 
 
 // ======================================
@@ -240,7 +249,7 @@ memory_sizer_dual_path u_wb0m0_sizer (
     .memory_has_be_i ( 1'b1  ),
 
     .sel_i ( 1'b1 ),
-    .access_width_i ( 4'b0001 ),   // AE18 data bus is 8-bit
+    .access_width_i ( 3'b001 ),   // AE18 data bus is 8-bit
     .access_big_endian_i ( 1'b0 ),
     .adr_i ( wb0m0_adr ),
     .we_i ( wb0m0_we ),
@@ -248,7 +257,7 @@ memory_sizer_dual_path u_wb0m0_sizer (
     .access_ack_o ( wb0m0_ack ),
 
     .memory_be_o ( m_wb0_sel[0] ),
-    .memory_width_i ( 4'b0100 ),   // All slaves are 32-bit
+    .memory_width_i ( 3'b100 ),   // All slaves are 32-bit
     .memory_ack_i ( m_wb0_ack[0] ),
     .memory_dat_io ( wb0m0_mem_dat ),
     .memory_adr_o ( m_wb0_adr[0] ),
@@ -263,47 +272,58 @@ assign wb0m0_acc_dat  =  wb0m0_we ? wb0m0_dat_w    : 32'bZ;
 assign wb0m0_mem_dat  = ~wb0m0_we ? m_wb0_dat_r[0] : 32'bZ;
 assign m_wb0_dat_w[0] =  wb0m0_we ? wb0m0_mem_dat  : 32'bZ;
 
-// -------------------------------------------------------------
-// Instantiate 4kx8 Data Memory
-// -------------------------------------------------------------
-
 wire [WB0_AWIDTH-1:0] wb0s_adr;
 wire [ 7:0]           wb0s_dat_r;
-wire [ 7:0]           wb0s0_dat_r;
 wire [ 7:0]           wb0s1_dat_r;
 wire [ 7:0]           wb0s4_dat_r;
 wire [ 7:0]           wb0s5_dat_r;
-wire [ 7:0]           wb0s6_dat_r;
 wire [ 7:0]           wb0s_dat_w;
 wire                  wb0s_we;
 wire                  wb0s_acc_ack;
 wire                  wb0s_mem_ack;
-wire                  wb0s0_ack;
 wire                  wb0s1_ack;
 wire                  wb0s4_ack;
 wire                  wb0s5_ack;
-wire                  wb0s6_ack;
 wire [WB0_DWIDTH-1:0] wb0s_acc_dat;
 wire [ 7:0]           wb0s_mem_dat;
 
+// -------------------------------------------------------------
+// Instantiate 1kx32 Data Memory
+// -------------------------------------------------------------
 
-block_ram #(
-    .ADDR_WIDTH ( 12 ),
-    .DATA_WIDTH ( 8 ),
-    .SEL_WIDTH ( 1 )
-)
-u_dmem (
-    .wb_clk_i ( wb_clk       ),
-    .wb_rst_i ( wb_rst       ),
-    .wb_cyc_i ( s_wb0_cyc[0] ),
-    .wb_stb_i ( s_wb0_stb[0] ),
-    .wb_sel_i ( wb0s_sel     ),
-    .wb_adr_i ( wb0s_adr     ),
-    .wb_we_i  ( wb0s_we      ),
-    .wb_dat_i ( wb0s_dat_w   ),
-    .wb_dat_o ( wb0s0_dat_r  ),
-    .wb_ack_o ( wb0s0_ack    )
+wire       dmem_inuse;
+wire       dmem_write;
+wire       dmem_ena;
+wire [3:0] dmem_wea;
+wire [9:0] dmem_adr;
+
+bufmem_1024x32 u_dmem (
+    .clka     ( wb_clk         ),
+    .rsta     ( wb_rst         ),
+    .ena      ( dmem_ena       ),
+    .wea      ( dmem_wea       ),
+    .addra    ( s_wb0_adr  [0] ),
+    .dina     ( s_wb0_dat_w[0] ),
+    .douta    ( s_wb0_dat_r[0] ),
+    .clkb     ( wb_clk         ),
+    .enb      ( dma_en   [3]   ),
+    .web      ( dma_we   [3]   ),
+    .addrb    ( dmem_adr       ),
+    .dinb     ( dma_dat_w[3]   ),
+    .doutb    ( dma_dat_r[3]   )
 );
+
+assign dmem_inuse  = s_wb0_cyc[0] & s_wb0_stb[0];
+assign dmem_ena    = dmem_inuse & ~s_wb0_we[0];
+assign dmem_write  = dmem_inuse &  s_wb0_we[0];
+assign dmem_wea[0] = dmem_write &  s_wb0_sel[0];
+assign dmem_wea[1] = dmem_write &  s_wb0_sel[1];
+assign dmem_wea[2] = dmem_write &  s_wb0_sel[2];
+assign dmem_wea[3] = dmem_write &  s_wb0_sel[3];
+assign dmem_adr[9] = 1'b1;
+assign dmem_adr[8:0] = dma_adr[3];
+
+assign s_wb0_ack[0] = dmem_inuse;
 
 
 // -------------------------------------------------------------
@@ -435,11 +455,59 @@ simple_gpio u_gpio(
 
 
 // -------------------------------------------------------------
+// Instantiate DMA Controller
+// -------------------------------------------------------------
+dma_controller u_dma (
+    .clk_i ( wb_clk ),
+    .rst_i ( wb_rst ),
+
+    // Wishbone Bus
+    .wb_dat_o ( s_wb0_dat_r[6] ),
+    .wb_dat_i ( s_wb0_dat_w[6] ),
+    .wb_ack_o ( s_wb0_ack  [6] ),
+    .wb_we_i  ( s_wb0_we   [6] ),
+    .wb_sel_i ( s_wb0_sel  [6] ),
+    .wb_adr_i ( s_wb0_adr  [6] ),
+    .wb_cyc_i ( s_wb0_cyc  [6] ),
+    .wb_stb_i ( s_wb0_stb  [6] ),
+
+    // DMA Bus to Device 0 - SPDIF Rx
+    .dma0_en_o  ( dma_en   [0] ),
+    .dma0_we_o  ( dma_we   [0] ),
+    .dma0_adr_o ( dma_adr  [0] ),
+    .dma0_dat_o ( dma_dat_w[0] ),
+    .dma0_dat_i ( dma_dat_r[0] ),
+
+    // DMA Bus to Device 1 - SPDIF Tx
+    .dma1_en_o  ( dma_en   [1] ),
+    .dma1_we_o  ( dma_we   [1] ),
+    .dma1_adr_o ( dma_adr  [1] ),
+    .dma1_dat_o ( dma_dat_w[1] ),
+    .dma1_dat_i ( dma_dat_r[1] ),
+
+    // DMA Bus to Device 2 - I2S Tx
+    .dma2_en_o  ( dma_en   [2] ),
+    .dma2_we_o  ( dma_we   [2] ),
+    .dma2_adr_o ( dma_adr  [2] ),
+    .dma2_dat_o ( dma_dat_w[2] ),
+    .dma2_dat_i ( dma_dat_r[2] ),
+
+    // DMA Bus to Device 3 - Main Memory
+    .dma3_en_o  ( dma_en   [3] ),
+    .dma3_we_o  ( dma_we   [3] ),
+    .dma3_adr_o ( dma_adr  [3] ),
+    .dma3_dat_o ( dma_dat_w[3] ),
+    .dma3_dat_i ( dma_dat_r[3] ),
+ 
+    .dma_irq ( dma_int )
+);
+
+// -------------------------------------------------------------
 // Instantiate SPDIF Reciever 
 // -------------------------------------------------------------
 rx_spdif #(
     .data_width ( WB0_DWIDTH ),
-    .addr_width ( 9 ),  // gives 1kB of buffer
+    .addr_width ( 10 ),  // gives 2kB of buffer
     .ch_st_capture ( 8 ),
     .wishbone_freq ( 40 )  // Assume a 40MHz wb_clk for now
 )
@@ -459,7 +527,14 @@ u_spdif_rx (
     // Interrupt line
     .rx_int_o ( spdif_rx_int ),
     // SPDIF input signal
-    .spdif_rx_i ( spdif_rx )
+    .spdif_rx_i ( spdif_rx ),
+    // DMA Bus
+    .dma_clk_i ( wb_clk ),
+    .dma_en_i  ( dma_en   [0] ),
+    .dma_we_i  ( dma_we   [0] ),
+    .dma_adr_i ( dma_adr  [0] ),
+    .dma_dat_i ( dma_dat_w[0] ),
+    .dma_dat_o ( dma_dat_r[0] )
 );
 
 
@@ -468,7 +543,7 @@ u_spdif_rx (
 // -------------------------------------------------------------
 tx_spdif #(
     .data_width ( WB0_DWIDTH ),
-    .addr_width ( 9 ),  // gives 1kB of buffer
+    .addr_width ( 10 ),  // gives 2kB of buffer
     .user_data_buf ( 1 ),
     .ch_stat_buf ( 1 )
 )
@@ -488,7 +563,14 @@ u_spdif_tx (
     // Interrupt line
     .tx_int_o ( spdif_tx_int ),
     // SPDIF input signal
-    .spdif_tx_o ( spdif_tx )
+    .spdif_tx_o ( spdif_tx ),
+    // DMA Bus
+    .dma_clk_i ( wb_clk ),
+    .dma_en_i  ( dma_en   [1] ),
+    .dma_we_i  ( dma_we   [1] ),
+    .dma_adr_i ( dma_adr  [1] ),
+    .dma_dat_i ( dma_dat_w[1] ),
+    .dma_dat_o ( dma_dat_r[1] )
 );
 
 
@@ -497,7 +579,7 @@ u_spdif_tx (
 // -------------------------------------------------------------
 tx_i2s_topm #(
     .data_width ( WB0_DWIDTH ),
-    .addr_width ( 9 )  // gives 1kB of buffer
+    .addr_width ( 10 )  // gives 2kB of buffer
 )
 u_i2s_tx (
     .wb_clk_i  ( wb_clk ),
@@ -517,7 +599,14 @@ u_i2s_tx (
     // SPDIF input signal
     .i2s_sd_o  ( i2s_tx_sd ),
     .i2s_sck_o ( i2s_tx_sck ),
-    .i2s_ws_o  ( i2s_tx_ws )
+    .i2s_ws_o  ( i2s_tx_ws ),
+    // DMA Bus
+    .dma_clk_i ( wb_clk ),
+    .dma_en_i  ( dma_en   [2] ),
+    .dma_we_i  ( dma_we   [2] ),
+    .dma_adr_i ( dma_adr  [2] ),
+    .dma_dat_i ( dma_dat_w[2] ),
+    .dma_dat_o ( dma_dat_r[2] )
 );
 
 //
@@ -529,7 +618,7 @@ memory_sizer_dual_path u_wb0s_sizer (
     .memory_has_be_i ( 1'b1  ),
 
     .sel_i ( s_wb0_sel[0] ),
-    .access_width_i ( 4'b1000 ),   // Bus is 32-bit
+    .access_width_i ( 3'b100 ),   // Bus is 32-bit
     .access_big_endian_i ( 1'b0 ),
     .adr_i ( s_wb0_adr[0] ),
     .we_i ( s_wb0_we[0] ),
@@ -537,7 +626,7 @@ memory_sizer_dual_path u_wb0s_sizer (
     .access_ack_o ( wb0s_acc_ack ),
 
     .memory_be_o ( wb0s_sel ),
-    .memory_width_i ( 4'b0001 ),   // Data RAM is 8-bit
+    .memory_width_i ( 3'b001 ),   // Data RAM is 8-bit
     .memory_ack_i ( wb0s_mem_ack ),
     .memory_dat_io ( wb0s_mem_dat ),
     .memory_adr_o ( wb0s_adr ),
@@ -547,38 +636,28 @@ memory_sizer_dual_path u_wb0s_sizer (
     .exception_watchdog_o ( wb0s_exc_wdt )
 );
 
-assign s_wb0_dat_r[0] = ~wb0s_we ? wb0s_acc_dat  : 32'bZ;
 assign s_wb0_dat_r[1] = ~wb0s_we ? wb0s_acc_dat  : 32'bZ;
 assign s_wb0_dat_r[4] = ~wb0s_we ? wb0s_acc_dat  : 32'bZ;
 assign s_wb0_dat_r[5] = ~wb0s_we ? wb0s_acc_dat  : 32'bZ;
-assign s_wb0_dat_r[6] = ~wb0s_we ? wb0s_acc_dat  : 32'bZ;
 assign wb0s_acc_dat   =  wb0s_we ?
-                         (s_wb0_stb[0] ? s_wb0_dat_w[0] :
-                          s_wb0_stb[1] ? s_wb0_dat_w[1] :
+                         (s_wb0_stb[1] ? s_wb0_dat_w[1] :
                           s_wb0_stb[4] ? s_wb0_dat_w[4] :
-                          s_wb0_stb[5] ? s_wb0_dat_w[5] :
-                          s_wb0_stb[6] ? s_wb0_dat_w[6] : 32'bZ) : 32'bZ;
+                          s_wb0_stb[5] ? s_wb0_dat_w[5] : 32'bZ) : 32'bZ;
 
 assign wb0s_mem_dat   = ~wb0s_we ? wb0s_dat_r    : 32'bZ;
 assign wb0s_dat_w     =  wb0s_we ? wb0s_mem_dat  : 32'bZ;
 
-assign wb0s_dat_r     = s_wb0_stb[0] ? wb0s0_dat_r :
-                        s_wb0_stb[1] ? wb0s1_dat_r :
+assign wb0s_dat_r     = s_wb0_stb[1] ? wb0s1_dat_r :
                         s_wb0_stb[4] ? wb0s4_dat_r :
-                        s_wb0_stb[5] ? wb0s5_dat_r :
-                        s_wb0_stb[6] ? wb0s6_dat_r : 8'b0;
+                        s_wb0_stb[5] ? wb0s5_dat_r : 8'b0;
 
-assign wb0s_mem_ack   = s_wb0_stb[0] ? wb0s0_ack :
-                        s_wb0_stb[1] ? wb0s1_ack :
+assign wb0s_mem_ack   = s_wb0_stb[1] ? wb0s1_ack :
                         s_wb0_stb[4] ? wb0s4_ack :
-                        s_wb0_stb[5] ? wb0s5_ack :
-                        s_wb0_stb[6] ? wb0s6_ack : 1'b0;
+                        s_wb0_stb[5] ? wb0s5_ack : 1'b0;
 
-assign s_wb0_ack[0]   = s_wb0_stb[0] ? wb0s_acc_ack : 1'b0;
 assign s_wb0_ack[1]   = s_wb0_stb[1] ? wb0s_acc_ack : 1'b0;
 assign s_wb0_ack[4]   = s_wb0_stb[4] ? wb0s_acc_ack : 1'b0;
 assign s_wb0_ack[5]   = s_wb0_stb[5] ? wb0s_acc_ack : 1'b0;
-assign s_wb0_ack[6]   = s_wb0_stb[6] ? wb0s_acc_ack : 1'b0;
 
 // -------------------------------------------------------------
 // Instantiate 16kx16 Instruction Memory
@@ -788,3 +867,4 @@ intercon1 u_wb1_arb (
 
 endmodule
 
+// vim:ts=4:sw=4:ai:et:si:sts=4

@@ -128,6 +128,7 @@ architecture rtl of rx_spdif is
    signal lock, rx_frame_start                        : std_logic;
    signal rx_data, rx_data_en, rx_block_start         : std_logic;
    signal rx_channel_a, rx_error, lock_evt            : std_logic;
+   signal dma_wea                                     : std_logic_vector(0 downto 0);
 
 begin
 
@@ -336,14 +337,16 @@ begin
       end generate UCAPR;
    end generate GCAP;
 
+   dma_wea   <= (0 => sample_wr);
+
 -- Sample buffer memory
    DMAMEM : bufmem_512x32
       port map (
          clka    => wb_clk_i,
          rsta    => wb_rst_i,
          ena     => mem_rd,
-         wea     => (0 => sample_wr),
-         addra   => '0' & sbuf_wr_adr,
+         wea     => dma_wea,
+         addra   => sbuf_wr_adr,
          dina    => sample_din,
          douta   => open,
 

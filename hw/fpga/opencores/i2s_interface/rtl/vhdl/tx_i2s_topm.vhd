@@ -110,6 +110,7 @@ architecture rtl of tx_i2s_topm is
    signal conf_res                           : std_logic_vector(5 downto 0);
    signal conf_tswap, conf_tinten, conf_txen : std_logic;
    signal zero                               : std_logic;
+
    
 begin
 
@@ -246,7 +247,7 @@ begin
          rsta    => wb_rst_i,
          ena     => mem_rd,
          wea     => "0",
-         addra   => '0' & sample_addr,
+         addra   => sample_addr,
          dina    => (others => '0'),
          douta   => sample_data,
 
