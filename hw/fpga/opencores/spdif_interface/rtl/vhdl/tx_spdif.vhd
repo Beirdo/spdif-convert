@@ -88,7 +88,7 @@ entity tx_spdif is
       dma_clk_i  : in  std_logic;
       dma_en_i   : in  std_logic;
       dma_we_i   : in  std_logic_vector(0 downto 0);
-      dma_adr_i  : in  std_logic_vector(6 downto 0);
+      dma_adr_i  : in  std_logic_vector(5 downto 0);
       dma_dat_i  : in  std_logic_vector(127 downto 0);
       dma_dat_o  : out std_logic_vector(127 downto 0)
 );
@@ -307,7 +307,7 @@ begin
    intstat_events(DATA_WIDTH - 1 downto 5) <= (others => '0');
 
 -- Sample buffer memory
-   DMAMEM : bufmem_512x32
+   DMAMEM : bufmem_256x32
       port map (
          clka    => wb_clk_i,
          rsta    => wb_rst_i,
@@ -318,7 +318,6 @@ begin
          douta   => sample_data,
 
          clkb    => wb_clk_i,
-         rstb    => wb_rst_i,
          enb     => dma_en_i,
          web     => dma_we_i,
          addrb   => dma_adr_i,

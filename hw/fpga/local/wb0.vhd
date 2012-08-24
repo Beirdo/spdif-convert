@@ -194,7 +194,7 @@ decoder:block
 begin
 wb0m0_bg <= '1';
 adr <= (wb0m0_adr_o and wb0m0_bg);
-wb0s0_ss <= '1' when adr(15 downto 12)="0000" else
+wb0s0_ss <= '1' when adr(15 downto 11)="00000" else
 '0';
 wb0s1_ss <= '1' when adr(15 downto 7)="000100000" else
 '0';

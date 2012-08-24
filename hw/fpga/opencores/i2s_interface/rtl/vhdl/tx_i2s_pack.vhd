@@ -58,20 +58,19 @@ use ieee.std_logic_1164.all;
 package tx_i2s_pack is
 
 ------------- Begin Cut here for COMPONENT Declaration ------ COMP_TAG
-COMPONENT bufmem_512x32
+COMPONENT bufmem_256x32
   PORT (
     clka : IN STD_LOGIC;
     rsta : IN STD_LOGIC;
     ena : IN STD_LOGIC;
     wea : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    addra : IN STD_LOGIC_VECTOR(8 DOWNTO 0);
+    addra : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
     dina : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
     douta : OUT STD_LOGIC_VECTOR(31 DOWNTO 0);
     clkb : IN STD_LOGIC;
-    rstb : IN STD_LOGIC;
     enb : IN STD_LOGIC;
     web : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-    addrb : IN STD_LOGIC_VECTOR(6 DOWNTO 0);
+    addrb : IN STD_LOGIC_VECTOR(5 DOWNTO 0);
     dinb : IN STD_LOGIC_VECTOR(127 DOWNTO 0);
     doutb : OUT STD_LOGIC_VECTOR(127 DOWNTO 0)
   );

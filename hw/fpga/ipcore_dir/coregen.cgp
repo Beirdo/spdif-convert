@@ -1,9 +1,22 @@
+# Date: Fri Aug 24 06:52:01 2012
+
+SET addpads = false
+SET asysymbol = true
 SET busformat = BusFormatAngleBracketNotRipped
-SET designentry = VHDL
+SET createndf = false
+SET designentry = Verilog
 SET device = xc6slx9
 SET devicefamily = spartan6
 SET flowvendor = Foundation_ISE
+SET formalverification = false
+SET foundationsym = false
+SET implementationfiletype = Ngc
 SET package = tqg144
+SET removerpms = false
+SET simulationfiles = Behavioral
 SET speedgrade = -3
-SET verilogsim = false
-SET vhdlsim = true
+SET verilogsim = true
+SET vhdlsim = false
+SET workingdirectory = ./tmp/
+
+# CRC: 8aa6ca67

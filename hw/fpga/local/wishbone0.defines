@@ -46,7 +46,7 @@ slave wb0s0
   err_o=0
   rty_o=0
   baseadr=0x0000
-  size=0x1000
+  size=0x0800
   baseadr1=0x00000000
   size1=0x0
   baseadr2=0x00000000

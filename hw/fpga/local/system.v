@@ -307,9 +307,9 @@ wire       dmem_inuse;
 wire       dmem_write;
 wire       dmem_ena;
 wire [3:0] dmem_wea;
-wire [9:0] dmem_adr;
+wire [8:0] dmem_adr;
 
-bufmem_1024x32 u_dmem (
+bufmem_512x32 u_dmem (
     .clka     ( wb_clk         ),
     .rsta     ( wb_rst         ),
     .ena      ( dmem_ena       ),
@@ -318,6 +318,7 @@ bufmem_1024x32 u_dmem (
     .dina     ( s_wb0_dat_w[0] ),
     .douta    ( s_wb0_dat_r[0] ),
     .clkb     ( wb_clk         ),
+    .rstb     ( wb_rst         ),
     .enb      ( dma_en   [3]   ),
     .web      ( dma_we   [3]   ),
     .addrb    ( dmem_adr       ),
@@ -332,7 +333,6 @@ assign dmem_wea[0] = dmem_write &  s_wb0_sel[0];
 assign dmem_wea[1] = dmem_write &  s_wb0_sel[1];
 assign dmem_wea[2] = dmem_write &  s_wb0_sel[2];
 assign dmem_wea[3] = dmem_write &  s_wb0_sel[3];
-assign dmem_adr[9] = 1'b1;
 assign dmem_adr[8:0] = dma_adr[3];
 
 assign s_wb0_ack[0] = dmem_inuse;
@@ -519,7 +519,7 @@ dma_controller u_dma (
 // -------------------------------------------------------------
 rx_spdif #(
     .data_width ( WB0_DWIDTH ),
-    .addr_width ( 10 ),  // gives 2kB of buffer
+    .addr_width ( 9 ),  // gives 1kB of buffer
     .ch_st_capture ( 8 ),
     .wishbone_freq ( 40 )  // Assume a 40MHz wb_clk for now
 )
@@ -555,7 +555,7 @@ u_spdif_rx (
 // -------------------------------------------------------------
 tx_spdif #(
     .data_width ( WB0_DWIDTH ),
-    .addr_width ( 10 ),  // gives 2kB of buffer
+    .addr_width ( 9 ),  // gives 1kB of buffer
     .user_data_buf ( 1 ),
     .ch_stat_buf ( 1 )
 )
@@ -586,40 +586,40 @@ u_spdif_tx (
 );
 
 
-// -------------------------------------------------------------
-// Instantiate I2S Transmitter 
-// -------------------------------------------------------------
-tx_i2s_topm #(
-    .data_width ( WB0_DWIDTH ),
-    .addr_width ( 10 )  // gives 2kB of buffer
-)
-u_i2s_tx (
-    .wb_clk_i  ( wb_clk ),
-    .wb_rst_i  ( wb_rst ),
-    .wb_sel_i  ( s_wb0_sel  [9] ),
-    .wb_stb_i  ( s_wb0_stb  [9] ),
-    .wb_we_i   ( s_wb0_we   [9] ),
-    .wb_cyc_i  ( s_wb0_cyc  [9] ),
-    .wb_bte_i  ( s_wb0_bte  [9] ),
-    .wb_cti_i  ( s_wb0_cti  [9] ),
-    .wb_adr_i  ( s_wb0_adr  [9] ),
-    .wb_dat_i  ( s_wb0_dat_w[9] ),
-    .wb_ack_o  ( s_wb0_ack  [9] ),
-    .wb_dat_o  ( s_wb0_dat_r[9] ),
-    // Interrupt line
-    .tx_int_o  ( i2s_tx_int ),
-    // SPDIF input signal
-    .i2s_sd_o  ( i2s_tx_sd ),
-    .i2s_sck_o ( i2s_tx_sck ),
-    .i2s_ws_o  ( i2s_tx_ws ),
-    // DMA Bus
-    .dma_clk_i ( wb_clk ),
-    .dma_en_i  ( dma_en   [2] ),
-    .dma_we_i  ( dma_we   [2] ),
-    .dma_adr_i ( dma_adr  [2] ),
-    .dma_dat_i ( dma_dat_w[2] ),
-    .dma_dat_o ( dma_dat_r[2] )
-);
+//// -------------------------------------------------------------
+//// Instantiate I2S Transmitter 
+//// -------------------------------------------------------------
+//tx_i2s_topm #(
+//    .data_width ( WB0_DWIDTH ),
+//    .addr_width ( 9 )  // gives 1kB of buffer
+//)
+//u_i2s_tx (
+//    .wb_clk_i  ( wb_clk ),
+//    .wb_rst_i  ( wb_rst ),
+//    .wb_sel_i  ( s_wb0_sel  [9] ),
+//    .wb_stb_i  ( s_wb0_stb  [9] ),
+//    .wb_we_i   ( s_wb0_we   [9] ),
+//    .wb_cyc_i  ( s_wb0_cyc  [9] ),
+//    .wb_bte_i  ( s_wb0_bte  [9] ),
+//    .wb_cti_i  ( s_wb0_cti  [9] ),
+//    .wb_adr_i  ( s_wb0_adr  [9] ),
+//    .wb_dat_i  ( s_wb0_dat_w[9] ),
+//    .wb_ack_o  ( s_wb0_ack  [9] ),
+//    .wb_dat_o  ( s_wb0_dat_r[9] ),
+//    // Interrupt line
+//    .tx_int_o  ( i2s_tx_int ),
+//    // SPDIF input signal
+//    .i2s_sd_o  ( i2s_tx_sd ),
+//    .i2s_sck_o ( i2s_tx_sck ),
+//    .i2s_ws_o  ( i2s_tx_ws ),
+//    // DMA Bus
+//    .dma_clk_i ( wb_clk ),
+//    .dma_en_i  ( dma_en   [2] ),
+//    .dma_we_i  ( dma_we   [2] ),
+//    .dma_adr_i ( dma_adr  [2] ),
+//    .dma_dat_i ( dma_dat_w[2] ),
+//    .dma_dat_o ( dma_dat_r[2] )
+//);
 
 //
 // Memory sizer for 8-bit slaves on WB0
