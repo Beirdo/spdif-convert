@@ -210,7 +210,11 @@ wire [WB0_DWIDTH-1:0] wb0m0_mem_dat;
 assign m_wb1_adr[0][15] = instr_base[0]; // set the top bit from the base reg
                                          // 0 = imem, 1 = bmem
 
-ae18_core u_ae18 (
+ae18_core #(
+    .ISIZ ( 16 ),
+    .DSIZ ( 16 )
+)
+u_ae18 (
     .wb_clk_o ( wb_clk ),
     .wb_rst_o ( wb_rst ),
 
@@ -239,6 +243,7 @@ ae18_core u_ae18 (
 );
 
 assign m_wb0_cyc[0] = m_wb0_stb[0];
+assign m_wb1_cyc[0] = m_wb1_stb[0];
 
 //
 // Memory sizer for AE18 on WB0
@@ -272,20 +277,27 @@ assign wb0m0_acc_dat  =  wb0m0_we ? wb0m0_dat_w    : 32'bZ;
 assign wb0m0_mem_dat  = ~wb0m0_we ? m_wb0_dat_r[0] : 32'bZ;
 assign m_wb0_dat_w[0] =  wb0m0_we ? wb0m0_mem_dat  : 32'bZ;
 
-wire [WB0_AWIDTH-1:0] wb0s_adr;
 wire [ 7:0]           wb0s_dat_r;
 wire [ 7:0]           wb0s1_dat_r;
 wire [ 7:0]           wb0s4_dat_r;
 wire [ 7:0]           wb0s5_dat_r;
 wire [ 7:0]           wb0s_dat_w;
-wire                  wb0s_we;
-wire                  wb0s_acc_ack;
+
 wire                  wb0s_mem_ack;
+wire                  wb0s_mem_we;
+wire                  wb0s_mem_sel;
+wire [WB0_AWIDTH-1:0] wb0s_mem_adr;
+wire [ 7:0]           wb0s_mem_dat;
+
+wire                  wb0s_acc_ack;
+wire                  wb0s_acc_we;
+wire [WB0_SWIDTH-1:0] wb0s_acc_sel;
+wire [WB0_AWIDTH-1:0] wb0s_acc_adr;
+wire [WB0_DWIDTH-1:0] wb0s_acc_dat;
+
 wire                  wb0s1_ack;
 wire                  wb0s4_ack;
 wire                  wb0s5_ack;
-wire [WB0_DWIDTH-1:0] wb0s_acc_dat;
-wire [ 7:0]           wb0s_mem_dat;
 
 // -------------------------------------------------------------
 // Instantiate 1kx32 Data Memory
@@ -341,9 +353,9 @@ wb_lcd u_wb_lcd (
     //
     .wb_dat_i ( wb0s_dat_w   ),
     .wb_dat_o ( wb0s1_dat_r  ),
-    .wb_adr_i ( wb0s_adr     ),
-    .wb_sel_i ( wb0s_sel     ),
-    .wb_we_i  ( wb0s_we      ),
+    .wb_adr_i ( wb0s_mem_adr ),
+    .wb_sel_i ( wb0s_mem_sel ),
+    .wb_we_i  ( wb0s_mem_we  ),
     .wb_cyc_i ( s_wb0_cyc[1] ),
     .wb_stb_i ( s_wb0_stb[1] ),
     .wb_ack_o ( wb0s1_ack    ),
@@ -424,8 +436,8 @@ u_simple_pic (
     .rst_i ( wb_rst ),
     .cyc_i ( s_wb0_cyc[4] ),
     .stb_i ( s_wb0_stb[4] ),
-    .adr_i ( wb0s_adr     ),
-    .we_i  ( wb0s_we      ),
+    .adr_i ( wb0s_mem_adr ),
+    .we_i  ( wb0s_mem_we  ),
     .dat_i ( wb0s_dat_w   ),
     .dat_o ( wb0s4_dat_r  ),
     .ack_o ( wb0s4_ack    ),
@@ -443,8 +455,8 @@ simple_gpio u_gpio(
     .rst_i   ( wb_rst ),
     .cyc_i   ( s_wb0_cyc[5] ),
     .stb_i   ( s_wb0_stb[5] ),
-    .adr_i   ( wb0s_adr     ),
-    .we_i    ( wb0s_we      ),
+    .adr_i   ( wb0s_mem_adr ),
+    .we_i    ( wb0s_mem_we  ),
     .dat_i   ( wb0s_dat_w   ),
     .dat_o   ( wb0s5_dat_r  ),
     .ack_o   ( wb0s5_ack    ),
@@ -617,35 +629,47 @@ memory_sizer_dual_path u_wb0s_sizer (
     .reset_i         ( wb_rst ),
     .memory_has_be_i ( 1'b1  ),
 
-    .sel_i ( s_wb0_sel[0] ),
+    .sel_i ( wb0s_acc_sel ),
     .access_width_i ( 3'b100 ),   // Bus is 32-bit
     .access_big_endian_i ( 1'b0 ),
-    .adr_i ( s_wb0_adr[0] ),
-    .we_i ( s_wb0_we[0] ),
+    .adr_i ( wb0s_acc_adr ),
+    .we_i ( wb0s_acc_we ),
     .dat_io ( wb0s_acc_dat ),
     .access_ack_o ( wb0s_acc_ack ),
 
-    .memory_be_o ( wb0s_sel ),
+    .memory_be_o ( wb0s_mem_sel ),
     .memory_width_i ( 3'b001 ),   // Data RAM is 8-bit
     .memory_ack_i ( wb0s_mem_ack ),
     .memory_dat_io ( wb0s_mem_dat ),
-    .memory_adr_o ( wb0s_adr ),
-    .memory_we_o ( wb0s_we ),
+    .memory_adr_o ( wb0s_mem_adr ),
+    .memory_we_o ( wb0s_mem_we ),
 
     .exception_be_o ( wb0s_exc_be ),
     .exception_watchdog_o ( wb0s_exc_wdt )
 );
 
-assign s_wb0_dat_r[1] = ~wb0s_we ? wb0s_acc_dat  : 32'bZ;
-assign s_wb0_dat_r[4] = ~wb0s_we ? wb0s_acc_dat  : 32'bZ;
-assign s_wb0_dat_r[5] = ~wb0s_we ? wb0s_acc_dat  : 32'bZ;
-assign wb0s_acc_dat   =  wb0s_we ?
+assign s_wb0_dat_r[1] = ~wb0s_mem_we ? wb0s_acc_dat  : 32'bZ;
+assign s_wb0_dat_r[4] = ~wb0s_mem_we ? wb0s_acc_dat  : 32'bZ;
+assign s_wb0_dat_r[5] = ~wb0s_mem_we ? wb0s_acc_dat  : 32'bZ;
+assign wb0s_acc_dat   =  wb0s_mem_we ?
                          (s_wb0_stb[1] ? s_wb0_dat_w[1] :
                           s_wb0_stb[4] ? s_wb0_dat_w[4] :
                           s_wb0_stb[5] ? s_wb0_dat_w[5] : 32'bZ) : 32'bZ;
 
-assign wb0s_mem_dat   = ~wb0s_we ? wb0s_dat_r    : 32'bZ;
-assign wb0s_dat_w     =  wb0s_we ? wb0s_mem_dat  : 32'bZ;
+assign wb0s_acc_sel   =   s_wb0_stb[1] ? s_wb0_sel[1] :
+                          s_wb0_stb[4] ? s_wb0_sel[4] :
+                          s_wb0_stb[5] ? s_wb0_sel[5] : 4'b0;
+
+assign wb0s_acc_we    =   s_wb0_stb[1] ? s_wb0_we[1] :
+                          s_wb0_stb[4] ? s_wb0_we[4] :
+                          s_wb0_stb[5] ? s_wb0_we[5] : 1'b0;
+
+assign wb0s_acc_adr   =   s_wb0_stb[1] ? s_wb0_adr[1] :
+                          s_wb0_stb[4] ? s_wb0_adr[4] :
+                          s_wb0_stb[5] ? s_wb0_adr[5] : 16'b0;
+
+assign wb0s_mem_dat   = ~wb0s_mem_we ? wb0s_dat_r    : 32'bZ;
+assign wb0s_dat_w     =  wb0s_mem_we ? wb0s_mem_dat  : 32'bZ;
 
 assign wb0s_dat_r     = s_wb0_stb[1] ? wb0s1_dat_r :
                         s_wb0_stb[4] ? wb0s4_dat_r :
@@ -658,6 +682,7 @@ assign wb0s_mem_ack   = s_wb0_stb[1] ? wb0s1_ack :
 assign s_wb0_ack[1]   = s_wb0_stb[1] ? wb0s_acc_ack : 1'b0;
 assign s_wb0_ack[4]   = s_wb0_stb[4] ? wb0s_acc_ack : 1'b0;
 assign s_wb0_ack[5]   = s_wb0_stb[5] ? wb0s_acc_ack : 1'b0;
+
 
 // -------------------------------------------------------------
 // Instantiate 16kx16 Instruction Memory
