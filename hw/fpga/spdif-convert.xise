@@ -206,7 +206,7 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="154"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="41"/>
     </file>
-    <file xil_pn:name="ipcore_dir/coregen/bufmem_512x32_synth.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="ipcore_dir/bufmem_512x32_synth.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="173"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="33"/>
     </file>
@@ -214,7 +214,7 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="174"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="46"/>
     </file>
-    <file xil_pn:name="ipcore_dir/coregen/bufmem_1024x32_synth.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="ipcore_dir/bufmem_1024x32_synth.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="175"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="49"/>
     </file>
