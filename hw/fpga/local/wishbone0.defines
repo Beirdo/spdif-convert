@@ -160,7 +160,7 @@ slave wb0s6
   err_o=0
   rty_o=0
   baseadr=0x6000
-  size=0x0004
+  size=0x0010
   baseadr1=0x00000000
   size1=0x0
   baseadr2=0x00000000

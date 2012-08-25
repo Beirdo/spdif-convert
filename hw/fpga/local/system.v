@@ -36,13 +36,6 @@ module system
     input                       spdif_rx,
     output                      spdif_tx,
 
-    //
-    // I2S
-    //
-    output                      i2s_tx_sd,
-    output                      i2s_tx_sck,
-    output                      i2s_tx_ws,
-
     inout  [7:0]                gpio
 );
 
@@ -469,7 +462,11 @@ simple_gpio u_gpio(
 // -------------------------------------------------------------
 // Instantiate DMA Controller
 // -------------------------------------------------------------
-dma_controller u_dma (
+dma_controller #(
+    .DMA_DWIDTH ( DMA_DWIDTH ),
+    .DMA_AWIDTH ( DMA_AWIDTH )
+)
+u_dma (
     .clk_i ( wb_clk ),
     .rst_i ( wb_rst ),
 
@@ -497,7 +494,7 @@ dma_controller u_dma (
     .dma1_dat_o ( dma_dat_w[1] ),
     .dma1_dat_i ( dma_dat_r[1] ),
 
-    // DMA Bus to Device 2 - I2S Tx
+    // DMA Bus to Device 2 - Instruction Memory
     .dma2_en_o  ( dma_en   [2] ),
     .dma2_we_o  ( dma_we   [2] ),
     .dma2_adr_o ( dma_adr  [2] ),
@@ -585,41 +582,6 @@ u_spdif_tx (
     .dma_dat_o ( dma_dat_r[1] )
 );
 
-
-//// -------------------------------------------------------------
-//// Instantiate I2S Transmitter 
-//// -------------------------------------------------------------
-//tx_i2s_topm #(
-//    .data_width ( WB0_DWIDTH ),
-//    .addr_width ( 9 )  // gives 1kB of buffer
-//)
-//u_i2s_tx (
-//    .wb_clk_i  ( wb_clk ),
-//    .wb_rst_i  ( wb_rst ),
-//    .wb_sel_i  ( s_wb0_sel  [9] ),
-//    .wb_stb_i  ( s_wb0_stb  [9] ),
-//    .wb_we_i   ( s_wb0_we   [9] ),
-//    .wb_cyc_i  ( s_wb0_cyc  [9] ),
-//    .wb_bte_i  ( s_wb0_bte  [9] ),
-//    .wb_cti_i  ( s_wb0_cti  [9] ),
-//    .wb_adr_i  ( s_wb0_adr  [9] ),
-//    .wb_dat_i  ( s_wb0_dat_w[9] ),
-//    .wb_ack_o  ( s_wb0_ack  [9] ),
-//    .wb_dat_o  ( s_wb0_dat_r[9] ),
-//    // Interrupt line
-//    .tx_int_o  ( i2s_tx_int ),
-//    // SPDIF input signal
-//    .i2s_sd_o  ( i2s_tx_sd ),
-//    .i2s_sck_o ( i2s_tx_sck ),
-//    .i2s_ws_o  ( i2s_tx_ws ),
-//    // DMA Bus
-//    .dma_clk_i ( wb_clk ),
-//    .dma_en_i  ( dma_en   [2] ),
-//    .dma_we_i  ( dma_we   [2] ),
-//    .dma_adr_i ( dma_adr  [2] ),
-//    .dma_dat_i ( dma_dat_w[2] ),
-//    .dma_dat_o ( dma_dat_r[2] )
-//);
 
 //
 // Memory sizer for 8-bit slaves on WB0
