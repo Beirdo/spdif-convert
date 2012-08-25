@@ -145,7 +145,6 @@ wire                        uart0_int;
 wire                        spi_int;
 wire                        spdif_rx_int;
 wire                        spdif_tx_int;
-wire                        i2s_tx_int;
 
 // In IRQ1
 wire                        dma_int;
@@ -162,8 +161,7 @@ assign irq_in[0] = uart0_int;
 assign irq_in[1] = spi_int;
 assign irq_in[2] = spdif_rx_int;
 assign irq_in[3] = spdif_tx_int;
-assign irq_in[4] = i2s_tx_int;
-assign irq_in[7:5] = 1'd0;
+assign irq_in[7:4] = 1'd0;
 
 // IRQ1
 assign irq_in[8]  = dma_int;
