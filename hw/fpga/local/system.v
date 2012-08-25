@@ -54,7 +54,7 @@ wire            wb_clk;
 wire            wb_rst;
 
 localparam WB0_MASTERS = 1;
-localparam WB0_SLAVES  = 10;
+localparam WB0_SLAVES  = 9;
 localparam WB0_DWIDTH  = 32;
 localparam WB0_SWIDTH  = 4;
 localparam WB0_AWIDTH  = 16;
@@ -66,8 +66,8 @@ localparam WB1_SWIDTH  = 2;
 localparam WB1_AWIDTH  = 16;
 
 localparam DMA_DEVICES = 4;
-localparam DMA_AWIDTH  = 7;
-localparam DMA_DWIDTH  = 128;
+localparam DMA_AWIDTH  = 12;
+localparam DMA_DWIDTH  = 64;
 
 // Wishbone 0 Master Buses
 wire      [WB0_AWIDTH-1:0]  m_wb0_adr      [WB0_MASTERS-1:0];
@@ -302,7 +302,7 @@ wire       dmem_ena;
 wire [3:0] dmem_wea;
 wire [8:0] dmem_adr;
 
-bufmem_512x32 u_dmem (
+bufmem_1024x32 u_dmem (
     .clka     ( wb_clk         ),
     .rsta     ( wb_rst         ),
     .ena      ( dmem_ena       ),
@@ -322,11 +322,11 @@ bufmem_512x32 u_dmem (
 assign dmem_inuse  = s_wb0_cyc[0] & s_wb0_stb[0];
 assign dmem_ena    = dmem_inuse & ~s_wb0_we[0];
 assign dmem_write  = dmem_inuse &  s_wb0_we[0];
-assign dmem_wea[0] = dmem_write &  s_wb0_sel[0];
-assign dmem_wea[1] = dmem_write &  s_wb0_sel[1];
-assign dmem_wea[2] = dmem_write &  s_wb0_sel[2];
-assign dmem_wea[3] = dmem_write &  s_wb0_sel[3];
-assign dmem_adr[8:0] = dma_adr[3];
+assign dmem_wea[0] = dmem_write &  s_wb0_sel[0][0];
+assign dmem_wea[1] = dmem_write &  s_wb0_sel[0][1];
+assign dmem_wea[2] = dmem_write &  s_wb0_sel[0][2];
+assign dmem_wea[3] = dmem_write &  s_wb0_sel[0][3];
+assign dmem_adr    = dma_adr[3];
 
 assign s_wb0_ack[0] = dmem_inuse;
 
@@ -516,7 +516,7 @@ u_dma (
 // -------------------------------------------------------------
 rx_spdif #(
     .data_width ( WB0_DWIDTH ),
-    .addr_width ( 9 ),  // gives 1kB of buffer
+    .addr_width ( 10 ),  // gives 2kB of buffer
     .ch_st_capture ( 8 ),
     .wishbone_freq ( 40 )  // Assume a 40MHz wb_clk for now
 )
@@ -552,7 +552,7 @@ u_spdif_rx (
 // -------------------------------------------------------------
 tx_spdif #(
     .data_width ( WB0_DWIDTH ),
-    .addr_width ( 9 ),  // gives 1kB of buffer
+    .addr_width ( 10 ),  // gives 2kB of buffer
     .user_data_buf ( 1 ),
     .ch_stat_buf ( 1 )
 )
@@ -650,23 +650,31 @@ assign s_wb0_ack[5]   = s_wb0_stb[5] ? wb0s_acc_ack : 1'b0;
 // Instantiate 16kx16 Instruction Memory
 // -------------------------------------------------------------
 
-block_ram #(
-    .ADDR_WIDTH ( 14 ),
-    .DATA_WIDTH ( 16 ),
-    .SEL_WIDTH ( 2)
-)
+bufmem_16384x16 
 u_imem (
-    .wb_clk_i ( wb_clk ),
-    .wb_rst_i ( wb_rst ),
-    .wb_cyc_i ( s_wb1_cyc  [0] ),
-    .wb_stb_i ( s_wb1_stb  [0] ),
-    .wb_sel_i ( s_wb1_sel  [0] ),
-    .wb_adr_i ( s_wb1_adr  [0] ),
-    .wb_we_i  ( s_wb1_we   [0] ),
-    .wb_dat_i ( s_wb1_dat_w[0] ),
-    .wb_dat_o ( s_wb1_dat_r[0] ),
-    .wb_ack_o ( s_wb1_ack  [0] )
+    .clka  ( wb_clk         ),
+    .rsta  ( wb_rst         ),
+    .ena   ( umem_ena       ),
+    .wea   ( umem_wea       ),
+    .addra ( s_wb1_adr  [0] ),
+    .dina  ( s_wb1_dat_w[0] ),
+    .douta ( s_wb1_dat_r[0] ),
+    .clkb  ( wb_clk         ),
+    .rstb  ( wb_rst         ),
+    .enb   ( dma_en     [2] ),
+    .web   ( dma_we     [2] ),
+    .addrb ( umem_adr       ),
+    .dinb  ( dma_dat_w  [2] ),
+    .doutb ( dma_dat_r  [2] )
 );
+
+assign umem_inuse  = s_wb1_cyc[0] & s_wb1_stb[0];
+assign umem_ena    = dmem_inuse & ~s_wb1_we[0];
+assign umem_write  = dmem_inuse &  s_wb1_we[0];
+assign umem_wea    = dmem_write &  |s_wb1_sel[0];
+assign umem_adr    = dma_adr[2];
+
+assign s_wb1_ack[0] = dmem_inuse;
 
 // -------------------------------------------------------------
 // Instantiate 4kx16 Boot Instruction Memory
@@ -795,17 +803,6 @@ intercon0 u_wb0_arb (
     .wb0s8_bte_i ( s_wb0_bte  [8] ),
     .wb0s8_cyc_i ( s_wb0_cyc  [8] ),
     .wb0s8_stb_i ( s_wb0_stb  [8] ),
-    // wb0s9
-    .wb0s9_dat_o ( s_wb0_dat_r[9] ),
-    .wb0s9_ack_o ( s_wb0_ack  [9] ),
-    .wb0s9_dat_i ( s_wb0_dat_w[9] ),
-    .wb0s9_we_i  ( s_wb0_we   [9] ),
-    .wb0s9_sel_i ( s_wb0_sel  [9] ),
-    .wb0s9_adr_i ( s_wb0_adr  [9] ),
-    .wb0s9_cti_i ( s_wb0_cti  [9] ),
-    .wb0s9_bte_i ( s_wb0_bte  [9] ),
-    .wb0s9_cyc_i ( s_wb0_cyc  [9] ),
-    .wb0s9_stb_i ( s_wb0_stb  [9] ),
     // clock and reset
     .clk   ( wb_clk ),
     .reset ( wb_rst )

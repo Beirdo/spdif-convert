@@ -84,9 +84,9 @@ entity tx_i2s_topm is
       dma_clk_i  : in  std_logic;
       dma_en_i   : in  std_logic;
       dma_we_i   : in  std_logic_vector(0 downto 0);
-      dma_adr_i  : in  std_logic_vector(5 downto 0);
-      dma_dat_i  : in  std_logic_vector(127 downto 0);
-      dma_dat_o  : out std_logic_vector(127 downto 0)
+      dma_adr_i  : in  std_logic_vector(7 downto 0);
+      dma_dat_i  : in  std_logic_vector(63 downto 0);
+      dma_dat_o  : out std_logic_vector(63 downto 0)
 );
 end tx_i2s_topm;
 

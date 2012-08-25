@@ -46,7 +46,7 @@ slave wb0s0
   err_o=0
   rty_o=0
   baseadr=0x0000
-  size=0x0800
+  size=0x1000
   baseadr1=0x00000000
   size1=0x0
   baseadr2=0x00000000
@@ -204,22 +204,3 @@ slave wb0s8
   baseadr2=0x00000000
   size2=0x0
 end slave wb0s8
-
-slave wb0s9
-  type=rw
-  dat_size=32
-  adr_i_hi=15
-  adr_i_lo=2
-  tga_i=1
-  tgc_i=1
-  tgd_i=0
-  lock_i=0
-  err_o=0
-  rty_o=0
-  baseadr=0x9000
-  size=0x1000
-  baseadr1=0x00000000
-  size1=0x0
-  baseadr2=0x00000000
-  size2=0x0
-end slave wb0s9

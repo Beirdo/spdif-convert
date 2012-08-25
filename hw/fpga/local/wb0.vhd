@@ -2,7 +2,7 @@
 --
 -- For defines see wishbone0.defines
 --
--- Generated Mon Aug 20 23:47:28 2012
+-- Generated Fri Aug 24 22:19:46 2012
 --
 -- Wishbone masters:
 --   wb0m0
@@ -21,13 +21,11 @@
 --   wb0s5
 --     baseadr 0x5000 - size 0x0002
 --   wb0s6
---     baseadr 0x6000 - size 0x0004
+--     baseadr 0x6000 - size 0x0010
 --   wb0s7
 --     baseadr 0x7000 - size 0x1000
 --   wb0s8
 --     baseadr 0x8000 - size 0x1000
---   wb0s9
---     baseadr 0x9000 - size 0x1000
 -----------------------------------------------------------------------------------------
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -54,6 +52,72 @@ end loop;  -- i
 return result;
 end "and";
 end intercon0_package;
+
+library IEEE;
+use IEEE.std_logic_1164.all;
+
+entity trafic_supervision is
+
+  generic (
+    priority     : integer := 1;
+    tot_priority : integer := 2);
+
+  port (
+    bg           : in  std_logic;       -- bus grant
+    ce           : in  std_logic;       -- clock enable
+    trafic_limit : out std_logic;
+    clk          : in  std_logic;
+    reset        : in  std_logic);
+
+end trafic_supervision;
+
+architecture rtl of trafic_supervision is
+
+  signal shreg : std_logic_vector(tot_priority-1 downto 0);
+  signal cntr : integer range 0 to tot_priority;
+
+begin  -- rtl
+
+  -- purpose: holds information of usage of latest cycles
+  -- type   : sequential
+  -- inputs : clk, reset, ce, bg
+  -- outputs: shreg('left)
+  sh_reg: process (clk)
+  begin  -- process shreg
+    if clk'event and clk = '1' then  -- rising clock edge
+      if ce='1' then
+        shreg <= shreg(tot_priority-2 downto 0) & bg;
+      end if;
+    end if;
+  end process sh_reg;
+
+  -- purpose: keeps track of used cycles
+  -- type   : sequential
+  -- inputs : clk, reset, shreg('left), bg, ce
+  -- outputs: trafic_limit
+  counter: process (clk, reset)
+  begin  -- process counter
+    if reset = '1' then                 -- asynchronous reset (active hi)
+      cntr <= 0;
+      trafic_limit <= '0';
+    elsif clk'event and clk = '1' then  -- rising clock edge
+      if ce='1' then
+        if bg='1' and shreg(tot_priority-1)/='1' then
+          cntr <= cntr + 1;
+          if cntr=priority-1 then
+            trafic_limit <= '1';
+          end if;
+        elsif bg='0' and shreg(tot_priority-1)='1' then
+          cntr <= cntr - 1;
+          if cntr=priority then
+            trafic_limit <= '0';
+          end if;
+        end if;
+      end if;
+    end if;
+  end process counter;
+
+end rtl;
 
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -161,17 +225,6 @@ entity intercon0 is
   wb0s8_bte_i : out std_logic_vector(1 downto 0);
   wb0s8_cyc_i : out std_logic;
   wb0s8_stb_i : out std_logic;
-  -- wb0s9
-  wb0s9_dat_o : in  std_logic_vector(31 downto 0);
-  wb0s9_ack_o : in  std_logic;
-  wb0s9_dat_i : out std_logic_vector(31 downto 0);
-  wb0s9_we_i  : out std_logic;
-  wb0s9_sel_i : out std_logic_vector(3 downto 0);
-  wb0s9_adr_i : out std_logic_vector(15 downto 2);
-  wb0s9_cti_i : out std_logic_vector(2 downto 0);
-  wb0s9_bte_i : out std_logic_vector(1 downto 0);
-  wb0s9_cyc_i : out std_logic;
-  wb0s9_stb_i : out std_logic;
   -- clock and reset
   clk   : in std_logic;
   reset : in std_logic);
@@ -187,14 +240,13 @@ architecture rtl of intercon0 is
   signal wb0s6_ss : std_logic; -- slave select
   signal wb0s7_ss : std_logic; -- slave select
   signal wb0s8_ss : std_logic; -- slave select
-  signal wb0s9_ss : std_logic; -- slave select
 begin  -- rtl
 decoder:block
   signal adr : std_logic_vector(15 downto 0);
 begin
 wb0m0_bg <= '1';
 adr <= (wb0m0_adr_o and wb0m0_bg);
-wb0s0_ss <= '1' when adr(15 downto 11)="00000" else
+wb0s0_ss <= '1' when adr(15 downto 12)="0000" else
 '0';
 wb0s1_ss <= '1' when adr(15 downto 7)="000100000" else
 '0';
@@ -212,8 +264,6 @@ wb0s7_ss <= '1' when adr(15 downto 12)="0111" else
 '0';
 wb0s8_ss <= '1' when adr(15 downto 12)="1000" else
 '0';
-wb0s9_ss <= '1' when adr(15 downto 12)="1001" else
-'0';
 wb0s0_adr_i <= adr(15 downto 0);
 wb0s1_adr_i <= adr(15 downto 0);
 wb0s2_adr_i <= adr(15 downto 0);
@@ -223,7 +273,6 @@ wb0s5_adr_i <= adr(15 downto 0);
 wb0s6_adr_i <= adr(15 downto 0);
 wb0s7_adr_i <= adr(15 downto 2);
 wb0s8_adr_i <= adr(15 downto 2);
-wb0s9_adr_i <= adr(15 downto 2);
 end block decoder;
 
 mux: block
@@ -241,7 +290,6 @@ wb0s5_cyc_i <= wb0s5_ss and cyc;
 wb0s6_cyc_i <= wb0s6_ss and cyc;
 wb0s7_cyc_i <= wb0s7_ss and cyc;
 wb0s8_cyc_i <= wb0s8_ss and cyc;
-wb0s9_cyc_i <= wb0s9_ss and cyc;
 stb <= (wb0m0_stb_o and wb0m0_bg);
 wb0s0_stb_i <= stb;
 wb0s1_stb_i <= stb;
@@ -252,7 +300,6 @@ wb0s5_stb_i <= stb;
 wb0s6_stb_i <= stb;
 wb0s7_stb_i <= stb;
 wb0s8_stb_i <= stb;
-wb0s9_stb_i <= stb;
 we <= (wb0m0_we_o and wb0m0_bg);
 wb0s0_we_i <= we;
 wb0s1_we_i <= we;
@@ -263,8 +310,7 @@ wb0s5_we_i <= we;
 wb0s6_we_i <= we;
 wb0s7_we_i <= we;
 wb0s8_we_i <= we;
-wb0s9_we_i <= we;
-ack <= wb0s0_ack_o or wb0s1_ack_o or wb0s2_ack_o or wb0s3_ack_o or wb0s4_ack_o or wb0s5_ack_o or wb0s6_ack_o or wb0s7_ack_o or wb0s8_ack_o or wb0s9_ack_o;
+ack <= wb0s0_ack_o or wb0s1_ack_o or wb0s2_ack_o or wb0s3_ack_o or wb0s4_ack_o or wb0s5_ack_o or wb0s6_ack_o or wb0s7_ack_o or wb0s8_ack_o;
 wb0m0_ack_i <= ack and wb0m0_bg;
 sel <= (wb0m0_sel_o and wb0m0_bg);
 wb0s0_sel_i <= sel;
@@ -276,7 +322,6 @@ wb0s5_sel_i <= sel;
 wb0s6_sel_i <= sel;
 wb0s7_sel_i <= sel;
 wb0s8_sel_i <= sel;
-wb0s9_sel_i <= sel;
 dat_m2s <= (wb0m0_dat_o and wb0m0_bg);
 wb0s0_dat_i <= dat_m2s;
 wb0s1_dat_i <= dat_m2s;
@@ -287,17 +332,14 @@ wb0s5_dat_i <= dat_m2s;
 wb0s6_dat_i <= dat_m2s;
 wb0s7_dat_i <= dat_m2s;
 wb0s8_dat_i <= dat_m2s;
-wb0s9_dat_i <= dat_m2s;
-dat_s2m <= (wb0s0_dat_o and wb0s0_ss) or (wb0s1_dat_o and wb0s1_ss) or (wb0s2_dat_o and wb0s2_ss) or (wb0s3_dat_o and wb0s3_ss) or (wb0s4_dat_o and wb0s4_ss) or (wb0s5_dat_o and wb0s5_ss) or (wb0s6_dat_o and wb0s6_ss) or (wb0s7_dat_o and wb0s7_ss) or (wb0s8_dat_o and wb0s8_ss) or (wb0s9_dat_o and wb0s9_ss);
+dat_s2m <= (wb0s0_dat_o and wb0s0_ss) or (wb0s1_dat_o and wb0s1_ss) or (wb0s2_dat_o and wb0s2_ss) or (wb0s3_dat_o and wb0s3_ss) or (wb0s4_dat_o and wb0s4_ss) or (wb0s5_dat_o and wb0s5_ss) or (wb0s6_dat_o and wb0s6_ss) or (wb0s7_dat_o and wb0s7_ss) or (wb0s8_dat_o and wb0s8_ss);
 wb0m0_dat_i <= dat_s2m;
 wb0s5_cti_i <= "000";
 wb0s7_cti_i <= "000";
 wb0s8_cti_i <= "000";
-wb0s9_cti_i <= "000";
 wb0s5_bte_i <= (others=>'0');
 wb0s7_bte_i <= (others=>'0');
 wb0s8_bte_i <= (others=>'0');
-wb0s9_bte_i <= (others=>'0');
 end block mux;
 
 end rtl;
