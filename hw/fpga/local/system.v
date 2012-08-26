@@ -262,7 +262,7 @@ memory_sizer_dual_path u_wb0m0_sizer (
     .memory_width_i ( 3'b100 ),   // All slaves are 32-bit
 
     .memory_be_o    ( wb0m0_mem_sel ),
-    .memory_adr_o   ( wb0m0_mem_addr ),
+    .memory_adr_o   ( wb0m0_mem_adr ),
     .memory_we_o    ( wb0m0_mem_we ),
     .memory_dat_io  ( wb0m0_mem_dat ),
     .memory_ack_i   ( wb0m0_mem_ack ),
@@ -282,10 +282,9 @@ assign wb0m0_acc_ack_o =  wb0s_is_8bit   ? m_wb0_ack[0] : wb0m0_acc_ack_i;
 assign wb0m0_mem_dat   = ~wb0m0_mem_we   ? wb0m0_mem_dat_r : 32'bZ;
 assign wb0m0_mem_dat_w =  wb0m0_mem_we   ? wb0m0_mem_dat   : 32'bZ;
 assign wb0m0_mem_dat_r = ~wb0s_is_8bit   ? m_wb0_dat_r[0]  : 32'bZ;
+assign wb0m0_mem_ack   = ~wb0s_is_8bit   & m_wb0_ack[0];
 
-assign m_wb0_dat_w[0]  =  wb0m0_acc_we_i ?
-                         (wb0s_is_8bit   ? wb0m0_acc_dat_w : wb0m0_mem_dat_w) :
-                         32'bZ;
+assign m_wb0_dat_w[0]  =  wb0s_is_8bit   ? wb0m0_acc_dat_w : wb0m0_mem_dat_w;
 assign m_wb0_adr[0]    =  wb0s_is_8bit   ? wb0m0_acc_adr   : wb0m0_mem_adr;
 assign m_wb0_sel[0]    =  wb0s_is_8bit   ? m_wb0_stb[0]    : wb0m0_mem_sel;
 assign m_wb0_we[0]     =  wb0s_is_8bit   ? wb0m0_acc_we_i  : wb0m0_mem_we;
