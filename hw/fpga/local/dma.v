@@ -1,7 +1,7 @@
 module dma_controller
 #(
-    parameter DMA_DWIDTH = 128,
-    parameter DMA_AWIDTH = 7
+    parameter DMA_DWIDTH = 64,
+    parameter DMA_AWIDTH = 12
 )
 (
     input              clk_i,
@@ -49,16 +49,18 @@ module dma_controller
 );
 
     reg [ 31:0] control_reg [2:0];
-    // Address 2 - | Start | 0               | Count        |
-    //             |  31   | 30:DMA_AWIDTH+1 | DMA_AWIDTH:0 |
-    // Address 1 - | WR_DEV | 0             | WR_ADDR        |
-    //             | 31:30  | 29:DMA_AWIDTH | DMA_AWIDTH-1:0 |
-    // Address 0 - | RD_DEV | 0             | RD_ADDR        |
-    //             | 31:30  | 29:DMA_AWIDTH | DMA_AWIDTH-1:0 |
+    // Address 2 - | Start  | 0               | Count          |
+    //             |  31    | 30:DMA_AWIDTH+1 | DMA_AWIDTH:0   |
+    // Address 1 - | WR_DEV | 0               | WR_ADDR        |
+    //             | 31:30  | 29:DMA_AWIDTH   | DMA_AWIDTH-1:0 |
+    // Address 0 - | RD_DEV | 0               | RD_ADDR        |
+    //             | 31:30  | 29:DMA_AWIDTH   | DMA_AWIDTH-1:0 |
 
     reg [DMA_AWIDTH:0] count_reg;
+
     reg [1:0] rd_dev_reg;
     reg [DMA_AWIDTH-1:0] rd_adr_reg;
+
     reg [1:0] wr_dev_reg;
     reg [DMA_AWIDTH-1:0] wr_adr_reg;
 
@@ -71,6 +73,35 @@ module dma_controller
     wire [1:0] reg_adr;
     assign reg_adr = wb_adr_i[3:2];
 
+    integer reg_num;
+
+    always @(reg_adr)
+        reg_num = (reg_adr == 2'b11) ? 0 : reg_adr;
+
+    wire [31:0] mask [2:0];
+    assign mask[2][31]              = 1'b1;
+    assign mask[2][30:DMA_AWIDTH+1] = {{29-DMA_AWIDTH}{1'b0}};
+    assign mask[2][DMA_AWIDTH:0]   = {{DMA_AWIDTH+1}{1'b1}};
+
+    assign mask[1][31:30]          = 2'b11;
+    assign mask[1][29:DMA_AWIDTH]  = {{30-DMA_AWIDTH}{1'b0}};
+    assign mask[1][DMA_AWIDTH-1:0] = {{DMA_AWIDTH}{1'b1}};
+
+    assign mask[0][31:30]          = 2'b11;
+    assign mask[0][29:DMA_AWIDTH]  = {{30-DMA_AWIDTH}{1'b0}};
+    assign mask[0][DMA_AWIDTH-1:0] = {{DMA_AWIDTH}{1'b1}};
+
+    wire [7:0] wr_data [3:0];
+
+    genvar j;
+    generate 
+        for(j=0;j<4;j=j+1)
+        begin : wrdata
+           assign wr_data[j] = wb_dat_i[8*j+7 -: 8] & mask[reg_num][8*j+7 -: 8];
+        end
+    endgenerate
+
+    integer i;
     always @(posedge clk_i)
     begin
         if (~rst_i)
@@ -80,50 +111,26 @@ module dma_controller
             control_reg[2] <= 32'd0;
         end
         else if (wb_stb_i & wb_we_i) begin
-            if (wb_sel_i[3]) begin
-                case(reg_adr)       // synopsys parallel_case full_case
-                    2'b00:      control_reg[0][31:24] <= wb_dat_i[31:24];
-                    2'b01:      control_reg[1][31:24] <= wb_dat_i[31:24];
-                    2'b10:      control_reg[2][31:24] <= wb_dat_i[31:24];
-                    2'b11:      ;
-                endcase
+            for (i=0;i<4;i=i+1)
+            begin
+              if (wb_sel_i[i]) begin
+                control_reg[reg_num][8*i+7 -: 8] <= wr_data[i];
+              end
             end
-            if (wb_sel_i[2]) begin
-                case(reg_adr)       // synopsys parallel_case full_case
-                    2'b00:      control_reg[0][23:16] <= wb_dat_i[23:16];
-                    2'b01:      control_reg[1][23:16] <= wb_dat_i[23:16];
-                    2'b10:      control_reg[2][23:16] <= wb_dat_i[23:16];
-                    2'b11:      ;
-                endcase
-            end
-            if (wb_sel_i[1]) begin
-                case(reg_adr)       // synopsys parallel_case full_case
-                    2'b00:      control_reg[0][15:8] <= wb_dat_i[15:8];
-                    2'b01:      control_reg[1][15:8] <= wb_dat_i[15:8];
-                    2'b10:      control_reg[2][15:8] <= wb_dat_i[15:8];
-                    2'b11:      ;
-                endcase
-            end
-            if (wb_sel_i[0]) begin
-                case(reg_adr)       // synopsys parallel_case full_case
-                    2'b00:      control_reg[0][7:0] <= wb_dat_i[7:0];
-                    2'b01:      control_reg[1][7:0] <= wb_dat_i[7:0];
-                    2'b10:      control_reg[2][7:0] <= wb_dat_i[7:0];
-                    2'b11:      ;
-                endcase
-            end
+        end
         else if (start)
+        begin
             control_reg[2][31] <= 0;
         end
     end
 
     always @(negedge clk_i)
-        case(reg_adr)       // synopsys parallel_case full_case
-            2'b00:      wb_dat_o <= #1 control_reg[0];
-            2'b01:      wb_dat_o <= #1 control_reg[1];
-            2'b10:      wb_dat_o <= #1 control_reg[2];
-            2'b11:      wb_dat_o <= #1 32'b0;
-        endcase
+    begin
+        if (~rst_i)
+            wb_dat_o <= 32'b0;
+        else
+            wb_dat_o <= #1 control_reg[reg_num];
+    end
 
     assign wb_ack_o = wb_stb_i;
 
@@ -133,7 +140,7 @@ module dma_controller
             start <= 1'b0;
         else
             start <= control_reg[2][31];
-    end;
+    end
 
     always @(negedge clk_i)
     begin
@@ -141,7 +148,7 @@ module dma_controller
             rd_dev_reg <= 2'd0;
         else if (control_reg[2][31])
             rd_dev_reg <= control_reg[0][31:30];
-    end;
+    end
 
     always @(negedge clk_i)
     begin
@@ -149,37 +156,37 @@ module dma_controller
             wr_dev_reg <= 2'd0;
         else if (control_reg[2][31])
             wr_dev_reg <= control_reg[1][31:30];
-    end;
+    end
 
     always @(negedge clk_i)
     begin
         if (~rst_i)
-            count_reg <= 8'd0;
+            count_reg <= {{DMA_AWIDTH+1}{1'b0}};
         else if (control_reg[2][31])
             count_reg <= control_reg[2][DMA_AWIDTH:0];
         else if (running)
             count_reg <= count_reg - 1;
-    end;
+    end
 
     always @(negedge clk_i)
     begin
         if (~rst_i)
-            rd_adr_reg <= 7'd0;
+            rd_adr_reg <= {{DMA_AWIDTH}{1'b0}};
         else if (control_reg[2][31])
             rd_adr_reg <= control_reg[0][DMA_AWIDTH-1:0];
         else if (running)
             rd_adr_reg <= rd_adr_reg + 1;
-    end;
+    end
 
     always @(negedge clk_i)
     begin
         if (~rst_i)
-            wr_adr_reg <= 7'd0;
+            wr_adr_reg <= {{DMA_AWIDTH}{1'b0}};
         else if (control_reg[2][31])
             wr_adr_reg <= control_reg[1][DMA_AWIDTH-1:0];
         else if (running)
             wr_adr_reg <= wr_adr_reg + 1;
-    end;
+    end
 
     always @(posedge clk_i)
     begin
@@ -189,7 +196,7 @@ module dma_controller
             running <= start;
         else if (running)
             running <= |count_reg;
-    end;
+    end
 
     always @(posedge clk_i)
     begin
@@ -197,7 +204,7 @@ module dma_controller
             wasrunning <= 1'd0;
         else
             wasrunning <= running;
-    end;
+    end
 
     always @(posedge clk_i)
     begin
@@ -205,7 +212,7 @@ module dma_controller
             done <= 1'd0;
         else 
             done <= (~running & wasrunning);
-    end;
+    end
 
     wire [DMA_DWIDTH-1:0] dma_dat_r;
 
@@ -215,7 +222,7 @@ module dma_controller
             dma_dat_reg <= {{DMA_DWIDTH}{1'd0}};
         else if (start | running)
             dma_dat_reg <= dma_dat_r;
-    end;
+    end
 
     assign dma_irq = done;
 

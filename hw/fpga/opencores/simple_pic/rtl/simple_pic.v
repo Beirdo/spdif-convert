@@ -133,29 +133,35 @@ module simple_pic(
   endfunction
 
 
-  parameter SOURCE_COUNT = 32;  // Number of interrupt sources
-  parameter REG_WIDTH = 16;	// Number of sources per interrupt out
+  parameter SOURCE_COUNT = 16;  // Number of interrupt sources
+  parameter REG_WIDTH = 8;	// Number of sources per interrupt out
   localparam BANKS = SOURCE_COUNT / REG_WIDTH;
   localparam BANK_ADDR_WIDTH = log2(BANKS);
-  localparam REG_ADDR_WIDTH  = 2 * (REG_WIDTH / 8);
+  localparam REG_ADDR_WIDTH  = 2 + log2(REG_WIDTH) - 3;
   localparam ADDR_WIDTH = BANK_ADDR_WIDTH + REG_ADDR_WIDTH;
+
+initial
+begin
+   $display("SOURCE_COUNT: %d, REG_WIDTH: %d", SOURCE_COUNT, REG_WIDTH);
+   $display("BANKS: %d, BANK_ADDR_WIDTH: %d, REG_ADDR_WIDTH: %d, ADDR_WIDTH: %d", BANKS, BANK_ADDR_WIDTH, REG_ADDR_WIDTH, ADDR_WIDTH);
+end
 
   //
   // Inputs & outputs
   //
 
   // 8bit WISHBONE bus slave interface
-  input                   clk_i;  // clock
-  input                   rst_i;  // reset (asynchronous active low)
-  input                   cyc_i;  // cycle
-  input                   stb_i;  // strobe  (cycle and strobe are same signal)
-  input  [ADDR_WIDTH-1:0] adr_i;  // address
-  input                   we_i;   // write enable
-  input  [REG_WIDTH-1:0]  dat_i;  // data output
-  output [REG_WIDTH-1:0]  dat_o;  // data input
-  output                  ack_o;  // normal bus termination
+  input                      clk_i;  // clock
+  input                      rst_i;  // reset (asynchronous active low)
+  input                      cyc_i;  // cycle
+  input                      stb_i;  // strobe  (cycle and strobe are same signal)
+  input  [ADDR_WIDTH-1:0]    adr_i;  // address
+  input                      we_i;   // write enable
+  input  [REG_WIDTH-1:0]     dat_i;  // data output
+  output [REG_WIDTH-1:0]     dat_o;  // data input
+  output                     ack_o;  // normal bus termination
 
-  output [BANKS-1:0]      int_o;  // interrupt output
+  output [BANKS-1:0]         int_o;  // interrupt output
 
   //
   // Interrupt sources
@@ -187,8 +193,8 @@ module simple_pic(
   wire [BANK_ADDR_WIDTH-1:0] bank_addr;
   wire [1:0]                 reg_addr;
 
-  assign bank_addr = adr_i[ADDR_WIDTH-1:REG_ADDR_WIDTH];
-  assign reg_addr  = adr_i[REG_ADDR_WIDTH-1:REG_ADDR_WIDTH-2];
+  assign bank_addr = adr_i[ADDR_WIDTH-1 -: BANK_ADDR_WIDTH];
+  assign reg_addr  = adr_i[REG_ADDR_WIDTH-1 -: 2];
 
   always @(bank_addr)
     irqbank = bank_addr;
@@ -246,21 +252,23 @@ module simple_pic(
 
   always @(posedge clk_i)
   begin
-    for (i=0; i<BANKS; i=i+1)
+    if (~rst_i)
     begin
-      if (~rst_i)
+      for (i=0; i<BANKS; i=i+1)
       begin
         pol[i]   <= #1 {{REG_WIDTH}{1'b0}}; // clear polarity register
         edgen[i] <= #1 {{REG_WIDTH}{1'b0}}; // clear edge enable register
         mask[i]  <= #1 {{REG_WIDTH}{1'b1}}; // mask all interrupts
       end
-      else if(wb_wr && i == irqbank) // wishbone write cycle??
-        case (reg_addr) // synopsys full_case parallel_case
-          2'b00: edgen[i] <= #1 dat_i; // EDGE-ENABLE register
-          2'b01: pol[i]   <= #1 dat_i; // POLARITY register
-          2'b10: mask[i]  <= #1 dat_i; // MASK register
-          2'b11: ;             // PENDING register is a special case (see below)
-        endcase
+    end
+    else if(wb_wr) // wishbone write cycle??
+    begin
+      case (reg_addr) // synopsys full_case parallel_case
+        2'b00: edgen[irqbank] <= #1 dat_i; // EDGE-ENABLE register
+        2'b01: pol[irqbank]   <= #1 dat_i; // POLARITY register
+        2'b10: mask[irqbank]  <= #1 dat_i; // MASK register
+        2'b11: ;             // PENDING register is a special case (see below)
+      endcase
     end
   end
 
@@ -280,26 +288,25 @@ module simple_pic(
 
   //
   // generate dat_o
-  reg [REG_WIDTH-1:0] dat_o;
+  reg [REG_WIDTH-1:0] dat_o;  // data input
   always @(posedge clk_i)
   begin
-    for (i=0; i<BANKS; i=i+1)
-    begin
-      if (i == irqbank)
-        case (reg_addr)
-          3'b00: dat_o <= #1 edgen[i];
-          3'b01: dat_o <= #1 pol[i];
-          3'b10: dat_o <= #1 mask[i];
-          3'b11: dat_o <= #1 pending[i];
-        endcase
-    end
+    case (reg_addr) // synopsys full_case parallel_case
+      2'b00: dat_o <= #1 edgen[irqbank];
+      2'b01: dat_o <= #1 pol[irqbank];
+      2'b10: dat_o <= #1 mask[irqbank];
+      2'b11: dat_o <= #1 pending[irqbank];
+    endcase
   end
 
   //
   // generate ack_o
   reg ack_o;
   always @(posedge clk_i)
-    ack_o <= #1 wb_acc & !ack_o;
+    if (~rst_i)
+      ack_o <= 1'b0;
+    else
+      ack_o <= #1 wb_acc & !ack_o;
 
   //
   // generate CPU interrupt signal
