@@ -184,7 +184,7 @@ wb0s0_ss <= '1' when adr(15 downto 12)="0000" else
 '0';
 wb0s1_ss <= '1' when adr(15 downto 7)="000100000" else
 '0';
-wb0s2_ss <= '1' when adr(15 downto 5)="00100000000" else
+wb0s2_ss <= '1' when adr(15 downto 4)="001000000000" else
 '0';
 wb0s3_ss <= '1' when adr(15 downto 5)="00110000000" else
 '0';

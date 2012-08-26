@@ -132,7 +132,7 @@
 // in 32bit-bus mode, the wb_sel_i signal is used to put data in correct place
 // also, in 8-bit version there'll be no debugging features included
 // CAUTION: doesn't work with current version of OR1200
-//`define DATA_BUS_WIDTH_8
+`define DATA_BUS_WIDTH_8
 
 `ifdef DATA_BUS_WIDTH_8
  `define UART_ADDR_WIDTH 3

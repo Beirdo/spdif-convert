@@ -1,8 +1,13 @@
+*.bgn
+*.bit
+*_bitgen.xwbt
 *.bld
 *.cmd_log
 *.csv
+*.drc
 *.html
 iseconfig/
+*.log
 *.lso
 *.map
 *.mrp
@@ -14,8 +19,10 @@ _ngo/
 *.ngr
 *.pad
 *_pad.txt
+pa.fromNcd.tcl
 *.par
 *.pcf
+planAhead_run_1/
 *.prj
 *.ptwx
 spdif-convert.gise
@@ -25,8 +32,11 @@ spdif-convert.gise
 *.twr
 *.twx
 *.unroutes
+*.ut
 *.vhi
 webtalk_pn.xml
+*.xdl
+.Xil/
 xlnx_auto*/
 *.xml
 _xmsgs/

@@ -1,10 +1,13 @@
 *.asy
+bufmem_16384x16/
+bufmem_4096x8/
+bufmem_512x32/
+*_flist.txt
 *.gise
+*.log
+*.v
+*.veo
 *.vhd
 *.vho
 *.xise
-bufmem_1024x32/
-bufmem_512x32/
-*_flist.txt
 *_xmdf.tcl
-*.log

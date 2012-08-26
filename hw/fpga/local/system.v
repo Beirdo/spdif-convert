@@ -204,7 +204,8 @@ wire                  wb0s_is_8bit;
 assign m_wb1_adr[0][15] = instr_base[0]; // set the top bit from the base reg
                                          // 0 = imem, 1 = bmem
 
-assign wb0s_is_8bit = s_wb0_stb[1] | s_wb0_stb[4] | s_wb0_stb[5];
+assign wb0s_is_8bit = s_wb0_stb[0] | s_wb0_stb[1] | s_wb0_stb[2] |
+                      s_wb0_stb[4] | s_wb0_stb[5];
 
 ae18_core #(
     .ISIZ ( 16 ),
@@ -290,15 +291,15 @@ assign m_wb0_sel[0]    =  wb0s_is_8bit   ? m_wb0_stb[0]    : wb0m0_mem_sel;
 assign m_wb0_we[0]     =  wb0s_is_8bit   ? wb0m0_acc_we_i  : wb0m0_mem_we;
 
 // -------------------------------------------------------------
-// Instantiate 1kx32 Data Memory
+// Instantiate 4kx8 Data Memory
 // -------------------------------------------------------------
 
 wire       dmem_inuse;
 wire       dmem_write;
 wire       dmem_ena;
-wire [3:0] dmem_wea;
+wire       dmem_wea;
 
-bufmem_1024x32 u_dmem (
+bufmem_4096x8 u_dmem (
     .clka     ( wb_clk         ),
     .rsta     ( wb_rst         ),
     .ena      ( dmem_ena       ),
@@ -309,16 +310,16 @@ bufmem_1024x32 u_dmem (
     .clkb     ( wb_clk         ),
     .rstb     ( wb_rst         ),
     .enb      ( dma_en   [3]   ),
-    .web      ( {8{dma_we[3]}} ),
+    .web      ( dma_we   [3]   ),
     .addrb    ( dma_adr  [3]   ),
     .dinb     ( dma_dat_w[3]   ),
     .doutb    ( dma_dat_r[3]   )
 );
 
-assign dmem_inuse  = s_wb0_cyc[0]      &  s_wb0_stb[0];
-assign dmem_ena    = dmem_inuse        & ~s_wb0_we[0];
-assign dmem_write  = dmem_inuse        &  s_wb0_we[0];
-assign dmem_wea    = {4{dmem_write}} &  s_wb0_sel[0];
+assign dmem_inuse   = s_wb0_cyc[0] &  s_wb0_stb[0];
+assign dmem_ena     = dmem_inuse   & ~s_wb0_we[0];
+assign dmem_write   = dmem_inuse   &  s_wb0_we[0];
+assign dmem_wea     = dmem_write   &  s_wb0_sel[0];
 
 assign s_wb0_ack[0] = dmem_inuse;
 
