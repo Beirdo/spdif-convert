@@ -22,7 +22,7 @@ _ngo/
 pa.fromNcd.tcl
 *.par
 *.pcf
-planAhead_run_1/
+planAhead_run_*/
 *.prj
 *.ptwx
 spdif-convert.gise
