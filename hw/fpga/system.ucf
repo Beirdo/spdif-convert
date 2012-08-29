@@ -1,0 +1,7 @@
+
+#Created by Constraints Editor (xc6slx9-tqg144-3) - 2012/08/28
+NET "brd_clk_p" TNM_NET = brd_clk_p;
+TIMESPEC TS_brd_clk_p = PERIOD "brd_clk_p" 20 ns HIGH 50%;
+NET "brd_clk_n" TNM_NET = brd_clk_n;
+TIMESPEC TS_brd_clk_n = PERIOD "brd_clk_n" TS_brd_clk_p PHASE 10 ns HIGH 50%;
+NET "sys_clk" TIG;
