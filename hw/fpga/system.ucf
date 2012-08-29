@@ -1,7 +1,49 @@
 
 #Created by Constraints Editor (xc6slx9-tqg144-3) - 2012/08/28
-NET "brd_clk_p" TNM_NET = brd_clk_p;
-TIMESPEC TS_brd_clk_p = PERIOD "brd_clk_p" 20 ns HIGH 50%;
-NET "brd_clk_n" TNM_NET = brd_clk_n;
-TIMESPEC TS_brd_clk_n = PERIOD "brd_clk_n" TS_brd_clk_p PHASE 10 ns HIGH 50%;
+NET "brd_clk_p" TNM_NET = "brd_clk_p";
+TIMESPEC TS_brd_clk_p = PERIOD "brd_clk_p" 20 ns HIGH 50 %;
+NET "brd_clk_n" TNM_NET = "brd_clk_n";
+TIMESPEC TS_brd_clk_n = PERIOD "brd_clk_n" TS_brd_clk_p  PHASE 10 ns HIGH 50 %;
 NET "sys_clk" TIG;
+
+# PlanAhead Generated physical constraints 
+
+NET "gpio[0]" LOC = P137;
+NET "gpio[1]" LOC = P138;
+NET "gpio[2]" LOC = P139;
+NET "gpio[3]" LOC = P140;
+NET "gpio[4]" LOC = P141;
+NET "gpio[7]" LOC = P144;
+NET "gpio[5]" LOC = P142;
+NET "gpio[6]" LOC = P143;
+NET "lcd_sf_d[1]" LOC = P112;
+NET "lcd_sf_d[0]" LOC = P111;
+NET "lcd_sf_d[3]" LOC = P115;
+NET "lcd_sf_d[2]" LOC = P114;
+NET "lcd_rs" LOC = P117;
+NET "lcd_e" LOC = P116;
+NET "lcd_rw" LOC = P118;
+NET "spi_miso" LOC = P104;
+NET "spi_mosi" LOC = P105;
+NET "spdif_rx" LOC = P127;
+NET "spdif_tx" LOC = P126;
+NET "i_uart0_cts" LOC = P1;
+NET "i_uart0_dcd" LOC = P2;
+NET "brd_rst" LOC = P45;
+NET "i_uart0_dsr" LOC = P5;
+NET "i_uart0_ri" LOC = P6;
+NET "i_uart0_rx" LOC = P7;
+NET "o_uart0_dtr" LOC = P8;
+NET "o_uart0_rts" LOC = P9;
+NET "o_uart0_tx" LOC = P10;
+NET "spi_clk" LOC = P93;
+NET "spi_ss[7]" LOC = P102;
+NET "spi_ss[0]" LOC = P94;
+NET "spi_ss[6]" LOC = P101;
+NET "spi_ss[1]" LOC = P95;
+NET "spi_ss[5]" LOC = P100;
+NET "spi_ss[2]" LOC = P97;
+NET "spi_ss[4]" LOC = P99;
+NET "spi_ss[3]" LOC = P98;
+NET "brd_clk_p" LOC = P56;
+NET "brd_clk_n" LOC = P55;
