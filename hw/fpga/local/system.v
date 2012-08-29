@@ -17,10 +17,10 @@ module system
     //
     // LCD interface
     //
-    output	[3:0]		lcd_sf_d,
-    output			lcd_e,
-    output			lcd_rs,
-    output			lcd_rw,
+    output  [3:0]               lcd_sf_d,
+    output                      lcd_e,
+    output                      lcd_rs,
+    output                      lcd_rw,
 
     //
     // SPI
@@ -42,7 +42,6 @@ module system
 
 wire            sys_clk;    // System clock
 wire            sys_rst;    // Active low reset, synchronous to sys_clk
-wire            clk_200;    // 200MHz from board
 wire            int_rst;    // internally triggered reset (ibase change)
 wire [7:0]      instr_base; // Top 8 bits of the instruction bus to use
 
@@ -249,7 +248,7 @@ assign m_wb1_cyc[0] = m_wb1_stb[0];
 memory_sizer_dual_path u_wb0m0_sizer (
     .clk_i           ( wb_clk ),
     .reset_i         ( wb_rst ),
-    .memory_has_be_i ( 1'b1  ),
+    .memory_has_be_i ( 1'b0   ),  // At least the SPI has no BE bits
 
     .access_width_i ( 3'b001 ),   // AE18 data bus is 8-bit
     .access_big_endian_i ( 1'b0 ),
@@ -331,8 +330,8 @@ wb_lcd u_wb_lcd (
     //
     // I/O Ports
     //
-    .wb_clk_i		( wb_clk ),
-    .wb_rst_i		( wb_rst ),
+    .wb_clk_i ( wb_clk ),
+    .wb_rst_i ( wb_rst ),
 
     //
     // WB slave interface
@@ -346,7 +345,7 @@ wb_lcd u_wb_lcd (
     .wb_stb_i ( s_wb0_stb  [1] ),
     .wb_ack_o ( s_wb0_ack  [1] ),
     .wb_err_o ( s_wb0_err  [1] ),
-	
+    
     //
     // LCD interface
     //
@@ -355,7 +354,7 @@ wb_lcd u_wb_lcd (
     .LCD_RS ( lcd_rs ),
     .LCD_RW ( lcd_rw )
 );
-	
+    
 // -------------------------------------------------------------
 // Instantiate UART
 // -------------------------------------------------------------
