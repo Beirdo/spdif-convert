@@ -46,7 +46,7 @@ assign rst0             = rst0_sync_r[RST_SYNC_NUM-1];
 // ======================================
 PLL_ADV # (
     .BANDWIDTH          ( "OPTIMIZED"        ),
-    .CLKIN1_PERIOD      ( 5                  ),
+    .CLKIN1_PERIOD      ( 20                 ),   // 1/20ns = 50MHz
     .CLKIN2_PERIOD      ( 1                  ),
     .CLKOUT0_DIVIDE     ( 1                  ), 
     .CLKOUT1_DIVIDE     (                    ),
@@ -68,7 +68,7 @@ PLL_ADV # (
     .CLKOUT5_DUTY_CYCLE ( 0.500              ),
     .COMPENSATION       ( "INTERNAL"         ),
     .DIVCLK_DIVIDE      ( 1                  ),
-    .CLKFBOUT_MULT      ( 4                  ),   // 200 MHz clock input, x4 to get 800 MHz MCB
+    .CLKFBOUT_MULT      ( 16                 ),   // 50 MHz clock input, x16 to get 800 MHz MCB
     .CLKFBOUT_PHASE     ( 0.0                ),
     .REF_JITTER         ( 0.005000           )
 )
