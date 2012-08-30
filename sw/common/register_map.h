@@ -1,7 +1,16 @@
 #ifndef _register_map_h
 #define _register_map_h
 
-#define BIT(x) (1<<(x))
+typedef unsigned char uint8_t;
+typedef          char  int8_t;
+typedef unsigned int  uint16_t;
+typedef          int   int16_t;
+typedef unsigned long uint32_t;
+typedef          long  int32_t;
+
+#define BIT(x)  (1<<(x))
+#define REG8(x) (*(volatile uint8_t *)(x))
+#define REG32(x) (*(volatile uint32_t *)(x))
 
 /* Wishbone 0 Slave 0 - 4k x 8 - Data RAM */
 #define DMEM_BASE           0x0000
