@@ -138,7 +138,7 @@
 `include "uart_defines.v"
 
 module uart_top	(
-	wb_clk_i, 
+	wb_clk_i, uart_clk_i,
 	
 	// Wishbone signals
 	wb_rst_i, wb_adr_i, wb_dat_i, wb_dat_o, wb_we_i, wb_stb_i, wb_cyc_i, wb_ack_o, wb_sel_i,
@@ -159,6 +159,7 @@ parameter 							 uart_data_width = `UART_DATA_WIDTH;
 parameter 							 uart_addr_width = `UART_ADDR_WIDTH;
 
 input 								 wb_clk_i;
+input 								 uart_clk_i;
 
 // WISHBONE interface
 input 								 wb_rst_i;
@@ -266,7 +267,8 @@ uart_wb		wb_interface(
 
 // Registers
 uart_regs	regs(
-	.clk(		wb_clk_i		),
+	.clk(		wb_clk_i	),
+        .uart_clk(      uart_clk_i      ),
 	.wb_rst_i(	wb_rst_i	),
 	.wb_addr_i(	wb_adr_int	),
 	.wb_dat_i(	wb_dat8_i	),

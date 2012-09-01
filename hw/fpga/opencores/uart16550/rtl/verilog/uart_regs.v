@@ -228,7 +228,7 @@
 `define UART_DL1 7:0
 `define UART_DL2 15:8
 
-module uart_regs (clk,
+module uart_regs (clk, uart_clk,
 	wb_rst_i, wb_addr_i, wb_dat_i, wb_dat_o, wb_we_i, wb_re_i, 
 
 // additional signals
@@ -248,6 +248,7 @@ ier, iir, fcr, mcr, lcr, msr, lsr, rf_count, tf_count, tstate, rstate,
 	);
 
 input 									clk;
+input 									uart_clk;
 input 									wb_rst_i;
 input [`UART_ADDR_WIDTH-1:0] 		wb_addr_i;
 input [7:0] 							wb_dat_i;
@@ -689,7 +690,7 @@ always @(posedge clk or posedge wb_rst_i)
 	else lsr7r <= #1 lsr_mask ? 0 : lsr7r || (lsr7 && ~lsr7_d);
 
 // Frequency divider
-always @(posedge clk or posedge wb_rst_i) 
+always @(posedge uart_clk or posedge wb_rst_i) 
 begin
 	if (wb_rst_i)
 		dlc <= #1 0;
@@ -701,7 +702,7 @@ begin
 end
 
 // Enable signal generation logic
-always @(posedge clk or posedge wb_rst_i)
+always @(posedge uart_clk or posedge wb_rst_i)
 begin
 	if (wb_rst_i)
 		enable <= #1 1'b0;

@@ -8,7 +8,8 @@ module clocks_resets  (
     input                       i_brd_clk_n,  
     input                       i_brd_clk_p,  
     output                      o_sys_rst,
-    output                      o_sys_clk
+    output                      o_sys_clk,
+    output                      o_uart_clk
 );
 
 
@@ -23,6 +24,7 @@ wire                        clkfbout_clkfbin;
 reg [RST_SYNC_NUM-1:0]      rst0_sync_r    /* synthesis syn_maxfan = 10 */;
 wire                        rst_tmp;
 wire                        pll_clk;
+wire                        pll_uart_clk;
 
 (* KEEP = "TRUE" *)  wire brd_clk_ibufg;
 
@@ -49,7 +51,7 @@ PLL_ADV # (
     .CLKIN1_PERIOD      ( 20                 ),   // 1/20ns = 50MHz
     .CLKIN2_PERIOD      ( 1                  ),
     .CLKOUT0_DIVIDE     ( 1                  ), 
-    .CLKOUT1_DIVIDE     (                    ),
+    .CLKOUT1_DIVIDE     ( 217                ),	  // 3686636Hz (for UART)
     .CLKOUT2_DIVIDE     ( 20                 ),   // 40Mhz = 800 MHz / 20
     .CLKOUT3_DIVIDE     ( 1                  ),
     .CLKOUT4_DIVIDE     ( 1                  ),
@@ -93,7 +95,7 @@ u_pll_adv (
     .CLKOUTDCM4  (                   ),
     .CLKOUTDCM5  (                   ),
     .CLKOUT0     (                   ),
-    .CLKOUT1     (                   ),
+    .CLKOUT1     ( pll_uart_clk      ),
     .CLKOUT2     ( pll_clk           ),
     .CLKOUT3     (                   ),
     .CLKOUT4     (                   ),
@@ -108,6 +110,12 @@ BUFG u_bufg_sys_clk (
     .O ( o_sys_clk  ),
     .I ( pll_clk    )
 );
+
+BUFG u_bufg_uart_clk (
+    .O ( o_uart_clk   ),
+    .I ( pll_uart_clk )
+);
+
 
 
 // ======================================

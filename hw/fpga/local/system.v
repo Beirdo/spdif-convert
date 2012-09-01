@@ -42,6 +42,8 @@ module system
 
 wire            sys_clk;    // System clock
 wire            sys_rst;    // Active low reset, synchronous to sys_clk
+wire            uart_clk;   // UART Clock (at 3686636Hz for easy divisors)
+                            // Aimed for 3686400Hz, but this is 0.2% off.
 wire            int_rst;    // internally triggered reset (ibase change)
 wire [7:0]      instr_base; // Top 8 bits of the instruction bus to use
 
@@ -172,7 +174,8 @@ clocks_resets u_clocks_resets (
     .i_brd_clk_n        ( brd_clk_n         ),  
     .i_brd_clk_p        ( brd_clk_p         ),  
     .o_sys_rst          ( sys_rst           ),
-    .o_sys_clk          ( sys_clk           )
+    .o_sys_clk          ( sys_clk           ),
+    .o_uart_clk         ( uart_clk          )
 );
                 
 
@@ -359,8 +362,9 @@ wb_lcd u_wb_lcd (
 // Instantiate UART
 // -------------------------------------------------------------
 uart_top u_uart (
-    .wb_clk_i               ( wb_clk        ),
-    .wb_rst_i               ( wb_rst        ),
+    .wb_clk_i               ( wb_clk         ),
+    .wb_rst_i               ( wb_rst         ),
+    .uart_clk_i             ( uart_clk       ),
 
     .int_o                  ( uart0_int      ),
     
