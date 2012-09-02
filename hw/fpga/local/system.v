@@ -42,8 +42,7 @@ module system
 
 wire            sys_clk;    // System clock
 wire            sys_rst;    // Active low reset, synchronous to sys_clk
-wire            uart_clk;   // UART Clock (at 3686636Hz for easy divisors)
-                            // Aimed for 3686400Hz, but this is 0.2% off.
+wire            uart_clk;   // UART Clock (at 3686400Hz for easy divisors)
 wire            int_rst;    // internally triggered reset (ibase change)
 wire [7:0]      instr_base; // Top 8 bits of the instruction bus to use
 
@@ -169,13 +168,20 @@ assign irq_in[7] = 1'b0;
 wire rst_in;
 assign rst_in = brd_rst | int_rst;
 
+wire [1:0] spdif_clk_sel;
+wire       spdif_clk;
+
+assign spdif_clk_sel = instr_base[7:6];
+
 clocks_resets u_clocks_resets (
     .i_brd_rst          ( rst_in            ),
     .i_brd_clk_n        ( brd_clk_n         ),  
     .i_brd_clk_p        ( brd_clk_p         ),  
     .o_sys_rst          ( sys_rst           ),
     .o_sys_clk          ( sys_clk           ),
-    .o_uart_clk         ( uart_clk          )
+    .o_uart_clk         ( uart_clk          ),
+    .i_spdif_clk_sel    ( spdif_clk_sel     ),
+    .o_spdif_clk        ( spdif_clk         )
 );
                 
 
@@ -203,42 +209,73 @@ wire                  wb0m0_mem_ack;
 
 wire                  wb0s_is_8bit;
 
-assign m_wb1_adr[0][15] = instr_base[0]; // set the top bit from the base reg
-                                         // 0 = imem, 1 = bmem
+//assign m_wb1_adr[0][15] = instr_base[0]; // set the top bit from the base reg
+//                                         // 0 = imem, 1 = bmem
 
 assign wb0s_is_8bit = s_wb0_stb[0] | s_wb0_stb[1] | s_wb0_stb[2] |
                       s_wb0_stb[4] | s_wb0_stb[5];
 
-ae18_core #(
-    .ISIZ ( 16 ),
-    .DSIZ ( 16 )
-)
-u_ae18 (
-    .wb_clk_o ( wb_clk ),
-    .wb_rst_o ( wb_rst ),
+//ae18_core #(
+//    .ISIZ ( 16 ),
+//    .DSIZ ( 16 )
+//)
+//u_ae18 (
+//    .wb_clk_o ( wb_clk ),
+//    .wb_rst_o ( wb_rst ),
+//
+//    // Instruction bus
+//    .iwb_adr_o ( m_wb1_adr  [0][14:0] ),
+//    .iwb_dat_i ( m_wb1_dat_r[0] ),
+//    .iwb_dat_o ( m_wb1_dat_w[0] ),
+//    .iwb_stb_o ( m_wb1_stb  [0] ),
+//    .iwb_we_o  ( m_wb1_we   [0] ),
+//    .iwb_ack_i ( m_wb1_ack  [0] ),
+//    .iwb_sel_o ( m_wb1_sel  [0] ),
+//
+//    // Data Bus
+//    .dwb_adr_o     ( wb0m0_acc_adr    ),
+//    .dwb_dat_o     ( wb0m0_acc_dat_w  ),
+//    .dwb_stb_o     ( m_wb0_stb[0]     ),
+//    .dwb_we_o      ( wb0m0_acc_we_i   ),
+//    .dwb_dat_i     ( wb0m0_acc_dat_r  ),
+//    .dwb_ack_i     ( wb0m0_acc_ack_o  ),
+//
+//    // I/O
+//    .int_i  ( ae_irq ),
+//    .inte_i ( ae_irqe ),
+//    .clk_i  ( sys_clk ),
+//    .rst_i  ( sys_rst )
+//);
+
+assign wb_clk = sys_clk;
+assign wb_rst = sys_rst;
+
+oc8051_top u_8051 (
+    .wb_clk_i ( wb_clk ),
+    .wb_rst_i ( wb_rst ),
 
     // Instruction bus
-    .iwb_adr_o ( m_wb1_adr  [0][14:0] ),
-    .iwb_dat_i ( m_wb1_dat_r[0] ),
-    .iwb_dat_o ( m_wb1_dat_w[0] ),
-    .iwb_stb_o ( m_wb1_stb  [0] ),
-    .iwb_we_o  ( m_wb1_we   [0] ),
-    .iwb_ack_i ( m_wb1_ack  [0] ),
-    .iwb_sel_o ( m_wb1_sel  [0] ),
+    .wbi_adr_o ( m_wb1_adr  [0] ),
+    .wbi_dat_i ( m_wb1_dat_r[0] ),
+    .wbi_stb_o ( m_wb1_stb  [0] ),
+    .wbi_ack_i ( m_wb1_ack  [0] ),
+    .wbi_cyc_o ( m_wb1_cyc  [0] ),
+    .wbi_err_i ( m_wb1_err  [0] ),
 
     // Data Bus
-    .dwb_adr_o     ( wb0m0_acc_adr    ),
-    .dwb_dat_o     ( wb0m0_acc_dat_w  ),
-    .dwb_stb_o     ( m_wb0_stb[0]     ),
-    .dwb_we_o      ( wb0m0_acc_we_i   ),
-    .dwb_dat_i     ( wb0m0_acc_dat_r  ),
-    .dwb_ack_i     ( wb0m0_acc_ack_o  ),
+    .wbd_adr_o ( wb0m0_acc_adr   ),
+    .wbd_dat_o ( wb0m0_acc_dat_w ),
+    .wbd_stb_o ( m_wb0_stb[0]    ),
+    .wbd_we_o  ( wb0m0_acc_we_i  ),
+    .wbd_dat_i ( wb0m0_acc_dat_r ),
+    .wbd_ack_i ( wb0m0_acc_ack_o ),
+    .wbd_cyc_o ( m_wb0_cyc[0]    ),
+    .wbd_err_i ( m_wb0_err[0]    ),
 
     // I/O
-    .int_i  ( ae_irq ),
-    .inte_i ( ae_irqe ),
-    .clk_i  ( sys_clk ),
-    .rst_i  ( sys_rst )
+    .int0_i  ( ae_irq[0] ),
+    .int1_i  ( ae_irq[1] ),
+    .ea_in   ( ~instr_base[0] ) // 1 = imem, 0 = bmem
 );
 
 assign m_wb0_cyc[0] = m_wb0_stb[0];
@@ -514,7 +551,7 @@ rx_spdif #(
     .data_width ( WB0_DWIDTH ),
     .addr_width ( 10 ),  // gives 2kB of buffer
     .ch_st_capture ( 8 ),
-    .wishbone_freq ( 40 )  // Assume a 40MHz wb_clk for now
+    .wishbone_freq ( 40 )  // TODO - remove this, feed in 128x bitclock.  Assume a 40MHz wb_clk for now
 )
 u_spdif_rx (
     .wb_clk_i ( wb_clk ),
