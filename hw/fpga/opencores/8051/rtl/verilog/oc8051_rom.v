@@ -229,6 +229,10 @@ begin
     addr01= addr_rst[11:7];
 end
 
+reg [7:0] data1;
+reg [7:0] data2;
+reg [7:0] data3;
+
 //
 // always read tree bits in row
 always @(posedge clk)
@@ -881,6 +885,12 @@ begin
 	end
   endcase
 end
+
+always @(posedge clk)
+begin
+  data_o <= #1 {8'h0, data3, data2, data1};
+end
+
 
 always @(posedge clk or posedge rst)
  if (rst)

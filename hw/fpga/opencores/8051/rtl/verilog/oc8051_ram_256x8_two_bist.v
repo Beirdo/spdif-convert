@@ -97,30 +97,26 @@ input   scanb_en;
 
 
 `ifdef OC8051_RAM_XILINX
-  xilinx_ram_dp xilinx_ram(
+  bufmem_256x8 xilinx_ram(
   	// read port
-  	.CLKA(clk),
-  	.RSTA(rst),
-  	.ENA(rd_en),
-  	.ADDRA(rd_addr),
-  	.DIA(8'h00),
-  	.WEA(1'b0),
-  	.DOA(rd_data),
+  	.clka(clk),
+  	.rsta(rst),
+  	.ena(rd_en),
+  	.addra(rd_addr),
+  	.dina(8'h00),
+  	.wea(1'b0),
+  	.douta(rd_data),
   
   	// write port
-  	.CLKB(clk),
-  	.RSTB(rst),
-  	.ENB(wr_en),
-  	.ADDRB(wr_addr),
-  	.DIB(wr_data),
-  	.WEB(wr),
-  	.DOB()
+  	.clkb(clk),
+  	.rstb(rst),
+  	.enb(wr_en),
+  	.addrb(wr_addr),
+  	.dinb(wr_data),
+  	.web(wr),
+  	.doutb()
   );
   
-  defparam
-  	xilinx_ram.dwidth = 8,
-  	xilinx_ram.awidth = 8;
-
 `else
 
   `ifdef OC8051_RAM_VIRTUALSILICON

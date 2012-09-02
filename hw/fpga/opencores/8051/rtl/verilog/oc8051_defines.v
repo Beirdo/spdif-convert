@@ -48,31 +48,31 @@
 //
 // oc8051 pherypherals
 //
-`define OC8051_UART
-`define OC8051_TC01
-`define OC8051_TC2
-`define OC8051_PORTS  //ports global enable
-`define OC8051_PORT0
-`define OC8051_PORT1
-`define OC8051_PORT2
-`define OC8051_PORT3
+//`define OC8051_UART
+//`define OC8051_TC01
+//`define OC8051_TC2
+//`define OC8051_PORTS  //ports global enable
+//`define OC8051_PORT0
+//`define OC8051_PORT1
+//`define OC8051_PORT2
+//`define OC8051_PORT3
 
 
 //
 // oc8051 ITERNAL ROM
 //
-//`define OC8051_ROM
+`define OC8051_ROM
 
 
 //
 // oc8051 memory
 //
 //`define OC8051_CACHE
-//`define OC8051_WB
+`define OC8051_WB
 
-//`define OC8051_RAM_XILINX
+`define OC8051_RAM_XILINX
 //`define OC8051_RAM_VIRTUALSILICON
-`define OC8051_RAM_GENERIC
+//`define OC8051_RAM_GENERIC
 
 
 `define OC8051_XILINX_ROM
