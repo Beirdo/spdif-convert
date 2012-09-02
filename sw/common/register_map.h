@@ -8,9 +8,14 @@ typedef          int   int16_t;
 typedef unsigned long uint32_t;
 typedef          long  int32_t;
 
-#define BIT(x)  (1<<(x))
-#define REG8(x) (*(volatile uint8_t *)(x))
-#define REG32(x) (*(volatile uint32_t *)(x))
+#define BIT(x)      (1<<(x))
+#define REG8(x)     (*(volatile uint8_t *)(x))
+#define REG32(x)    (*(volatile uint32_t *)(x))
+
+#define NELEMS(x)   (sizeof(x) / sizeof(x[0]))
+
+#define SYS_CLK     40000000
+#define UART_CLK    3686400     /* Actually implemented as 3686636 */
 
 /* Wishbone 0 Slave 0 - 4k x 8 - Data RAM */
 #define DMEM_BASE           0x0000

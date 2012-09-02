@@ -9,7 +9,7 @@
 #define DMA_DEV(x)      (((x) << 30) & 0xC0000000)
 #define DMA_ADDR(x)     (((x) >> DMA_ADDR_SHIFT) & DMA_ADDR_MASK)
 
-#define DMA_COUNT(x)    (((x) > (DMA_ADDR_COUNT << DMA_ADDR_SHIFT)) ? \
+#define DMA_COUNT_VAL(x) (((x) > (DMA_ADDR_COUNT << DMA_ADDR_SHIFT)) ? \
                          DMA_ADDR_COUNT : ((x) >> DMA_ADDR_SHIFT))
 #define DMA_START       BIT(31)
 
