@@ -70,9 +70,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 entity rx_phase_det is
-   generic (WISHBONE_FREQ : natural := 33);  -- WishBone frequency in MHz
    port (
-      wb_clk_i       : in  std_logic;   -- wishbone clock
+      spdif_clk_i    : in  std_logic;   -- SPDIF Clk * 8
       rxen           : in  std_logic;   -- phase detector enable
       spdif          : in  std_logic;   -- SPDIF input signal
       lock           : out std_logic;   -- true if locked to spdif input
@@ -93,9 +92,9 @@ architecture rtl of rx_phase_det is
 
    constant TRANSITIONS                              : integer := 70;
    constant FRAMES_FOR_LOCK                          : integer := 3;
-   signal maxpulse, maxp, mp_cnt                     : integer range 0 to 16 * WISHBONE_FREQ;
-   signal last_cnt, max_thres                        : integer range 0 to 16 * WISHBONE_FREQ;
-   signal minpulse, minp, min_thres                  : integer range 0 to 8 * WISHBONE_FREQ;
+   signal maxpulse, maxp, mp_cnt                     : integer range 0 to 16;
+   signal last_cnt, max_thres                        : integer range 0 to 16;
+   signal minpulse, minp, min_thres                  : integer range 0 to 8;
    signal zspdif, spdif_in, zspdif_in, trans, ztrans : std_logic;
    signal trans_cnt                                  : integer range 0 to TRANSITIONS;
    signal valid, p_long, p_short                     : std_logic;
@@ -115,7 +114,7 @@ architecture rtl of rx_phase_det is
 begin
 
    -- Pulse width analyzer
-   PHDET : process (wb_clk_i, rxen)
+   PHDET : process (spdif_clk_i, rxen)
    begin
       if rxen = '0' then                -- reset by configuration register bit
          maxpulse     <= 0;
@@ -126,7 +125,7 @@ begin
          spdif_in     <= '0';
          trans_cnt    <= 0;
          minpulse     <= 0;
-         minp         <= 8 * WISHBONE_FREQ;
+         minp         <= 8;
          last_cnt     <= 0;
          trans        <= '0';
          valid        <= '0';
@@ -137,7 +136,7 @@ begin
          ztrans       <= '0';
          new_pulse    <= '0';
       else
-         if rising_edge(wb_clk_i) then
+         if rising_edge(spdif_clk_i) then
             -- sync spdif signal to wishbone clock
             zspdif    <= spdif;
             spdif_in  <= zspdif;
@@ -158,7 +157,7 @@ begin
                end if;
             else
                trans <= '0';
-               if mp_cnt < 16 * WISHBONE_FREQ then
+               if mp_cnt < 16 then
                   mp_cnt <= mp_cnt + 1;
                end if;
             end if;
@@ -172,7 +171,7 @@ begin
                   maxpulse  <= maxp;
                   maxp      <= 0;
                   minpulse  <= minp;
-                  minp      <= 8 * WISHBONE_FREQ;
+                  minp      <= 8;
                   min_thres <= maxp / 2;
                   if maxp < 11 then
                      max_thres <= maxp - 1;
@@ -235,7 +234,7 @@ begin
    rx_channel_a <= irx_channel_a;
 
    -- State machine that hunt for and lock onto sub-frames
-   FRX : process (wb_clk_i, rxen)
+   FRX : process (spdif_clk_i, rxen)
    begin
       if rxen = '0' then
          framerx        <= IDLE;
@@ -257,7 +256,7 @@ begin
          short_idx      <= '0';
          frame_cnt      <= 0;
          last_preamble  <= NONE;
-      elsif rising_edge(wb_clk_i) then
+      elsif rising_edge(spdif_clk_i) then
          zilock <= ilock;
          if zilock /= ilock then        -- generate event for event reg.
             lock_evt <= '1';

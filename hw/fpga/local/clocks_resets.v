@@ -10,8 +10,9 @@ module clocks_resets  (
     output                      o_sys_rst,
     output                      o_sys_clk,
     output                      o_uart_clk,
-    input  [1:0]                i_spdif_clk_sel,
-    output                      o_spdif_clk
+    input                       i_spdif_tx_clk_sel,
+    output                      o_spdif_rx_clk,
+    output                      o_spdif_tx_clk
 );
 
 localparam                  RST_SYNC_NUM = 25;
@@ -47,33 +48,41 @@ clk_double u_clk_double (
 
 wire int_spdif_44k1_clk;    // 45.1584MHz = 44.1kHz SPDIF clk * 8
 wire int_spdif_48k_clk;     // 49.152MHz = 48kHz SPDIF clk * 8
-wire int_spdif_32k_clk;     // 32.768MHz = 32kHz SPDIF clk * 8
+
+wire int_spdif_48k_fb;
+wire int_spdif_44k1_fb;
 
 pll_spdif_48k u_clk_spdif_48k (
     .CLK_IN1    ( o_sys_clk         ),  // 36.864MHz system clock
+    .CLKFB_IN   ( int_spdif_48k_fb  ),
     .CLK_OUT1   ( int_spdif_48k_clk ),
-    .CLK_OUT2   ( int_spdif_32k_clk ),
+    .CLKFB_OUT  ( int_spdif_48k_fb  ),
     .RESET      ( pll23_reset       ),
     .LOCKED     ( pll2_locked       )
 );
 
 pll_spdif_44k1 u_clk_spdif_44k1 (
     .CLK_IN1    ( interm_spdif_clk   ), // 25.8048 MHz
+    .CLKFB_IN   ( int_spdif_44k1_fb  ),
     .CLK_OUT1   ( int_spdif_44k1_clk ),
+    .CLKFB_OUT  ( int_spdif_44k1_fb  ),
     .RESET      ( pll23_reset        ),
     .LOCKED     ( pll3_locked        )
 );
 
 assign pll23_reset = i_brd_rst | ~pll1_locked;
 
-wire int_spdif_clk;
-assign int_spdif_clk = i_spdif_clk_sel == 2'b00 ? int_spdif_32k_clk  :
-                       i_spdif_clk_sel == 2'b01 ? int_spdif_44k1_clk :
-                       i_spdif_clk_sel == 2'b10 ? int_spdif_48k_clk  : 1'b0;
+BUFGMUX u_spdif_tx_clk_mux (
+    .I0     ( int_spdif_44k1_clk ),
+    .I1     ( int_spdif_48k_clk  ),
+    .O      ( o_spdif_tx_clk     ),
+    .S      ( i_spdif_tx_clk_sel )
+);
 
-BUFG u_spdif_clk_buf
-   (.O (o_spdif_clk),
-    .I (int_spdif_clk));
+BUFG u_spdif_rx_clk (
+    .I      ( int_spdif_48k_clk  ),
+    .O      ( o_spdif_rx_clk     )
+);
 
 // ======================================
 // Synchronous reset generation
@@ -86,7 +95,6 @@ wire                        pll_locked;
 assign pll_locked = pll1_locked & pll2_locked & pll3_locked;
 
 assign rst0 = rst0_sync_r[RST_SYNC_NUM-1];
-assign o_sys_rst = rst0;
 
 assign rst_tmp = i_brd_rst | ~pll_locked;
 
@@ -97,6 +105,12 @@ always @(posedge o_sys_clk or posedge rst_tmp)
     else
         // logical left shift by one (pads with 0)
         rst0_sync_r <= rst0_sync_r << 1;
+
+// BUFG u_rst_buf
+//   (.O (o_sys_rst),
+//    .I (rst0));
+
+assign o_sys_rst = rst0;
 
 endmodule
 

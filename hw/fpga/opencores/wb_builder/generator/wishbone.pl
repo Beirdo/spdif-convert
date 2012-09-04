@@ -1167,6 +1167,7 @@ sub gen_global_signals {
     # slave select for generation of stb_i to slaves
     for ($i=1; $i <= $slaves; $i++) {
       printf OUTFILE "  signal %s_ss : std_logic; -- slave select\n",$slave[$i]{"wbs"}; };
+    printf OUTFILE "  signal %s_bg : std_logic; -- bus grant\n",$master[1]{"wbm"}; 
   # shared bus
   } elsif ($interconnect eq "sharedbus") {
     # bus grant
@@ -1194,6 +1195,7 @@ sub gen_arbiter {
     # ack_i
     # cyc_i
     # printf OUTFILE "%s_bg <= %s_cyc_o;\n",$master[1]{"wbm"},$master[1]{"wbm"};
+    printf OUTFILE "%s_bg <= '1';\n",$master[1]{"wbm"};
   # sharedbus
   } elsif ($interconnect eq "sharedbus") {
     printf OUTFILE "arbiter_sharedbus: block\n";
@@ -2014,7 +2016,9 @@ open(OUTFILE,">$outfile$ext") or die "could not write to $outfile$ext";
 gen_header;
 if ($hdl eq 'vhdl') {
   gen_vhdl_package;
-  gen_trafic_ctrl;
+  if ($masters > 1) {
+     gen_trafic_ctrl;
+  }
   gen_entity;
   printf OUTFILE "architecture rtl of %s is\n",$intercon;
   if ($signal_groups == 1) { gen_sig_remap; };
@@ -2028,7 +2032,7 @@ if ($hdl eq 'vhdl') {
     gen_muxcbs;
   };
   if ($signal_groups == 1) { gen_remap; };
-  printf OUTFILE "end rtl;";
+  printf OUTFILE "end rtl;\n";
 } else {
   
 };

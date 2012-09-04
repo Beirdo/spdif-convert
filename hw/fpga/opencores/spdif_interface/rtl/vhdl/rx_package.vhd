@@ -177,7 +177,7 @@ END COMPONENT;
    component rx_phase_det
       generic (WISHBONE_FREQ : natural := 33);  -- WishBone frequency in MHz
       port (
-         wb_clk_i       : in  std_logic;
+         spdif_clk_i    : in  std_logic;
          rxen           : in  std_logic;
          spdif          : in  std_logic;
          lock           : out std_logic;

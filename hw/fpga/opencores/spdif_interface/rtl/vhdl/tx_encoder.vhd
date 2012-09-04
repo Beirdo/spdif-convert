@@ -86,6 +86,7 @@ entity tx_encoder is
       evt_hcsbf    : out std_logic;     -- higher ch.st/user data buf empty 
       evt_hsbf     : out std_logic;     -- higher sample buf empty event
       evt_lsbf     : out std_logic;     -- lower sample buf empty event
+      spdif_clk_i  : in  std_logic;
       spdif_tx_o   : out std_logic);
 end tx_encoder;
 
@@ -155,11 +156,11 @@ architecture rtl of tx_encoder is
    
 begin
 
--- SPDIF clock enable generation. The clock is a fraction of the Wishbone bus
+-- SPDIF clock enable generation. The clock is a fraction of the SPDIF (*8)
 -- clock, determined by the conf_ratio value.
-   CGEN : process (wb_clk_i)
+   CGEN : process (spdif_clk_i)
    begin
-      if rising_edge(wb_clk_i) then
+      if rising_edge(spdif_clk_i) then
          if conf_txen = '0' then        -- transmitter disabled
             spdif_clk_en <= '0';
             clk_cnt      <= 0;
@@ -239,9 +240,9 @@ begin
 -- State machine that generates sub-frames and blocks
    spdif_tx_o <= spdif_out;
 
-   FRST : process (wb_clk_i)
+   FRST : process (spdif_clk_i)
    begin
-      if rising_edge(wb_clk_i) then
+      if rising_edge(spdif_clk_i) then
          if conf_txen = '0' then
             framest      <= IDLE;
             frame_cnt    <= 0;
@@ -420,9 +421,9 @@ begin
 
 -- Audio data latching
    DA32 : if DATA_WIDTH = 32 generate
-      ALAT : process (wb_clk_i)
+      ALAT : process (spdif_clk_i)
       begin
-         if rising_edge(wb_clk_i) then
+         if rising_edge(spdif_clk_i) then
             if send_audio = '0' then
                audio(23 downto 0) <= (others => '0');
             else
@@ -462,9 +463,9 @@ begin
    end generate DA32;
 
    DA16 : if DATA_WIDTH = 16 generate
-      ALAT : process (wb_clk_i)
+      ALAT : process (spdif_clk_i)
       begin
-         if rising_edge(wb_clk_i) then
+         if rising_edge(spdif_clk_i) then
             if send_audio = '0' then
                audio(23 downto 0) <= (others => '0');
             else

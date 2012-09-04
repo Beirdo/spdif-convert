@@ -83,6 +83,7 @@ entity tx_spdif is
       -- Interrupt line
       tx_int_o   : out std_logic;
       -- SPDIF output signal
+      spdif_clk_i : in std_logic;
       spdif_tx_o : out std_logic;
       -- DMA RAM Bus
       dma_clk_i  : in  std_logic;
@@ -392,6 +393,7 @@ begin
          evt_hcsbf    => evt_hcsbf,     -- higher ch.st/user data buf empty 
          evt_hsbf     => evt_hsbf,      -- higher sample buf empty event
          evt_lsbf     => evt_lsbf,      -- lower sample buf empty event
+         spdif_clk_i  => spdif_clk_i,	-- SPDIF Clock * 8
          spdif_tx_o   => spdif_tx_o);   -- SPDIF output signal
 
 end rtl;

@@ -2,7 +2,7 @@
 --
 -- For defines see wishbone1.defines
 --
--- Generated Tue Aug 21 00:33:11 2012
+-- Generated Mon Sep  3 23:27:14 2012
 --
 -- Wishbone masters:
 --   wb1m0
@@ -79,14 +79,14 @@ entity intercon1 is
   reset : in std_logic);
 end intercon1;
 architecture rtl of intercon1 is
-  signal wb1m0_bg : std_logic; -- master bus grant
   signal wb1s0_ss : std_logic; -- slave select
   signal wb1s1_ss : std_logic; -- slave select
+  signal wb1m0_bg : std_logic; -- bus grant
 begin  -- rtl
+wb1m0_bg <= '1';
 decoder:block
   signal adr : std_logic_vector(15 downto 0);
 begin
-wb1m0_bg <= '1';
 adr <= (wb1m0_adr_o and wb1m0_bg);
 wb1s0_ss <= '1' when adr(15 downto 15)="0" else
 '0';

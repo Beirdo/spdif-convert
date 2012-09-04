@@ -4,18 +4,18 @@ module dma_controller
     parameter DMA_AWIDTH = 12
 )
 (
-    input              clk_i,
-    input              rst_i,
+    input                   clk_i,
+    input                   rst_i,  // Active high reset
 
     // Wishbone Bus
-    output reg [31:0]      wb_dat_o,
-    input  [31:0]      wb_dat_i,
-    output             wb_ack_o,
-    input              wb_we_i,
-    input  [3:0]       wb_sel_i,
-    input  [15:0]      wb_adr_i,
-    input              wb_cyc_i,
-    input              wb_stb_i,
+    output reg [31:0]       wb_dat_o,
+    input  [31:0]           wb_dat_i,
+    output                  wb_ack_o,
+    input                   wb_we_i,
+    input  [3:0]            wb_sel_i,
+    input  [15:0]           wb_adr_i,
+    input                   wb_cyc_i,
+    input                   wb_stb_i,
 
     // DMA Bus to Device 0 - SPDIF Rx
     output                  dma0_en_o,
@@ -45,7 +45,7 @@ module dma_controller
     output [DMA_DWIDTH-1:0] dma3_dat_o,
     input  [DMA_DWIDTH-1:0] dma3_dat_i,
  
-    output             dma_irq
+    output                  dma_irq
 );
 
     reg [ 31:0] control_reg [2:0];
@@ -91,42 +91,43 @@ module dma_controller
     assign mask[0][29:DMA_AWIDTH]  = {{30-DMA_AWIDTH}{1'b0}};
     assign mask[0][DMA_AWIDTH-1:0] = {{DMA_AWIDTH}{1'b1}};
 
-    wire [7:0] wr_data [3:0];
+    wire [31:0] wr_data;
 
-    genvar j;
-    generate 
-        for(j=0;j<4;j=j+1)
-        begin : wrdata
-           assign wr_data[j] = wb_dat_i[8*j+7 -: 8] & mask[reg_num][8*j+7 -: 8];
-        end
-    endgenerate
+    assign wr_data = wb_dat_i & mask[reg_num];
 
     integer i;
     always @(posedge clk_i)
     begin
-        if (~rst_i)
-        begin
+        if (rst_i) begin
             control_reg[0] <= 32'd0;
             control_reg[1] <= 32'd0;
             control_reg[2] <= 32'd0;
         end
-        else if (wb_stb_i & wb_we_i) begin
-            for (i=0;i<4;i=i+1)
-            begin
-              if (wb_sel_i[i]) begin
-                control_reg[reg_num][8*i+7 -: 8] <= wr_data[i];
-              end
+        else begin
+            if (wb_stb_i & wb_we_i) begin
+                if (wb_sel_i[3])
+                    control_reg[reg_num][31:24] <= wr_data[31:24];
+
+                if (wb_sel_i[2])
+                    control_reg[reg_num][23:16] <= wr_data[23:16];
+
+                if (wb_sel_i[1])
+                    control_reg[reg_num][15:8]  <= wr_data[15:8];
+
+                if (wb_sel_i[0])
+                    control_reg[reg_num][7:0]   <= wr_data[7:0];
             end
-        end
-        else if (start)
-        begin
-            control_reg[2][31] <= 0;
+            else begin
+                if (start) begin
+                    control_reg[2][31] <= 0;
+                end
+            end
         end
     end
 
     always @(negedge clk_i)
     begin
-        if (~rst_i)
+        if (rst_i)
             wb_dat_o <= 32'b0;
         else
             wb_dat_o <= #1 control_reg[reg_num];
@@ -136,7 +137,7 @@ module dma_controller
 
     always @(negedge clk_i)
     begin
-        if (~rst_i)
+        if (rst_i)
             start <= 1'b0;
         else
             start <= control_reg[2][31];
@@ -144,7 +145,7 @@ module dma_controller
 
     always @(negedge clk_i)
     begin
-        if (~rst_i)
+        if (rst_i)
             rd_dev_reg <= 2'd0;
         else if (control_reg[2][31])
             rd_dev_reg <= control_reg[0][31:30];
@@ -152,7 +153,7 @@ module dma_controller
 
     always @(negedge clk_i)
     begin
-        if (~rst_i)
+        if (rst_i)
             wr_dev_reg <= 2'd0;
         else if (control_reg[2][31])
             wr_dev_reg <= control_reg[1][31:30];
@@ -160,7 +161,7 @@ module dma_controller
 
     always @(negedge clk_i)
     begin
-        if (~rst_i)
+        if (rst_i)
             count_reg <= {{DMA_AWIDTH+1}{1'b0}};
         else if (control_reg[2][31])
             count_reg <= control_reg[2][DMA_AWIDTH:0];
@@ -170,7 +171,7 @@ module dma_controller
 
     always @(negedge clk_i)
     begin
-        if (~rst_i)
+        if (rst_i)
             rd_adr_reg <= {{DMA_AWIDTH}{1'b0}};
         else if (control_reg[2][31])
             rd_adr_reg <= control_reg[0][DMA_AWIDTH-1:0];
@@ -180,7 +181,7 @@ module dma_controller
 
     always @(negedge clk_i)
     begin
-        if (~rst_i)
+        if (rst_i)
             wr_adr_reg <= {{DMA_AWIDTH}{1'b0}};
         else if (control_reg[2][31])
             wr_adr_reg <= control_reg[1][DMA_AWIDTH-1:0];
@@ -190,7 +191,7 @@ module dma_controller
 
     always @(posedge clk_i)
     begin
-        if (~rst_i)
+        if (rst_i)
             running <= 1'd0;
         else if (start)
             running <= start;
@@ -200,7 +201,7 @@ module dma_controller
 
     always @(posedge clk_i)
     begin
-        if (~rst_i)
+        if (rst_i)
             wasrunning <= 1'd0;
         else
             wasrunning <= running;
@@ -208,7 +209,7 @@ module dma_controller
 
     always @(posedge clk_i)
     begin
-        if (~rst_i)
+        if (rst_i)
             done <= 1'd0;
         else 
             done <= (~running & wasrunning);
@@ -218,7 +219,7 @@ module dma_controller
 
     always @(posedge clk_i)
     begin
-        if (~rst_i)
+        if (rst_i)
             dma_dat_reg <= {{DMA_DWIDTH}{1'd0}};
         else if (start | running)
             dma_dat_reg <= dma_dat_r;

@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 14.2
-# Date: Sun Sep  2 08:49:50 2012
+# Date: Tue Sep  4 05:23:21 2012
 #
 ##############################################################
 #
@@ -68,7 +68,7 @@ CSET clkin1_jitter_ps=387.52
 CSET clkin1_ui_jitter=0.010
 CSET clkin2_jitter_ps=100.0
 CSET clkin2_ui_jitter=0.010
-CSET clkout1_drives=BUFG
+CSET clkout1_drives=No_buffer
 CSET clkout1_requested_duty_cycle=50.000
 CSET clkout1_requested_out_freq=45.1584
 CSET clkout1_requested_phase=0.000
@@ -140,7 +140,7 @@ CSET din_port=DIN
 CSET dout_port=DOUT
 CSET drdy_port=DRDY
 CSET dwe_port=DWE
-CSET feedback_source=FDBK_AUTO
+CSET feedback_source=FDBK_ONCHIP
 CSET in_freq_units=Units_MHz
 CSET in_jitter_units=Units_UI
 CSET input_clk_stopped_port=INPUT_CLK_STOPPED
@@ -266,4 +266,4 @@ CSET use_status=false
 MISC pkg_timestamp=2012-05-10T12:44:55Z
 # END Extra information
 GENERATE
-# CRC:  542ba0c
+# CRC: 84704896

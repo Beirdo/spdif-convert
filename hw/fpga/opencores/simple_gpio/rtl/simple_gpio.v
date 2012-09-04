@@ -122,8 +122,8 @@ module simple_gpio(
   reg [io:1] ctrl, line;                  // ControlRegister, LineRegister
   reg [io:1] lgpio, llgpio;               // LatchedGPIO pins
 
-  reg [ 7:0] instr_base      = 8'hC0;     // Instruction base register
-  reg [ 7:0] prev_instr_base = 8'hC0;     // Previous Instruction base register
+  reg [ 7:0] instr_base      = 8'h01;     // Instruction base register
+  reg        prev_instr_base = 1'b1;      // Previous Instruction base register
 
   //
   // perform parameter checks
@@ -142,8 +142,8 @@ module simple_gpio(
   wire wb_acc = cyc_i & stb_i;            // WISHBONE access
   wire wb_wr  = wb_acc & we_i;            // WISHBONE write access
 
-  always @(posedge clk_i or negedge rst_i)
-      if (~rst_i)
+  always @(posedge clk_i)
+      if (rst_i)
         begin
             ctrl <= #1 {{io}{1'b0}};
             line <= #1 {{io}{1'b0}};
@@ -154,18 +154,18 @@ module simple_gpio(
            2'b01:  line <= #1 dat_i[io-1:0];
            2'b10:  
              begin
-               prev_instr_base <= instr_base;
+               prev_instr_base <= #1 instr_base[0];
                instr_base <= #1 dat_i[7:0];
              end
            2'b11: ;
          endcase
 
   reg ibase_changed;
-  always @(posedge clk_i or negedge rst_i)
-    if (~rst_i)
-      ibase_changed <= #1 0;
+  always @(posedge clk_i)
+    if (rst_i)
+      ibase_changed <= #1 1'b0;
     else
-      ibase_changed <= #1 (instr_base != prev_instr_base);
+      ibase_changed <= #1 instr_base[0] ^ prev_instr_base;
 
   reg [7:0] dat_o;
   always @(posedge clk_i)
@@ -176,17 +176,21 @@ module simple_gpio(
       2'b11: ;
     endcase
 
+  reg ack_delay;
   reg ack_o;
-  always @(posedge clk_i or negedge rst_i)
-    if (~rst_i)
+  always @(posedge clk_i)
+    if (rst_i) begin
       ack_o <= #1 1'b0;
-    else
-      ack_o <= #1 wb_acc & !ack_o;
+      ack_delay <= #1 1'b0;
+    end else begin
+      ack_delay <= #1 wb_acc & ~ack_delay;
+      ack_o <= #1 ack_delay;
+    end
 
 
   reg rst_o;
-  always @ (negedge clk_i or negedge rst_i)
-    if (~rst_i)
+  always @ (negedge clk_i)
+    if (rst_i)
       rst_o <= #1 1'b0;
     else
       rst_o <= #1 ibase_changed;

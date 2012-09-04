@@ -341,7 +341,8 @@ always @(
          alignment           or
          we_i                or
          access_width_i      or
-         access_big_endian_i
+         access_big_endian_i or
+         wr_byte_mux_select
          )
 begin
   // If bytes are reversed, an extra "bit inversion mask" is applied
@@ -369,7 +370,8 @@ always @(
          alignment           or
          we_i                or
          access_width_i      or
-         access_big_endian_i
+         access_big_endian_i or
+         rd_byte_mux_select
          )
 begin
     // For reads, negate the shift amount

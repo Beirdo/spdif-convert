@@ -72,8 +72,7 @@ use work.rx_package.all;
 entity rx_spdif is
    generic (DATA_WIDTH    : integer range 16 to 32;
             ADDR_WIDTH    : integer range 8 to 64;
-            CH_ST_CAPTURE : integer range 0 to 8;
-            WISHBONE_FREQ : natural);
+            CH_ST_CAPTURE : integer range 0 to 8);
    port (
       -- Wishbone interface
       wb_clk_i   : in  std_logic;
@@ -91,6 +90,7 @@ entity rx_spdif is
       -- Interrupt line
       rx_int_o   : out std_logic;
       -- SPDIF input signal
+      spdif_clk_i : in std_logic;
       spdif_rx_i : in  std_logic;
       -- DMA RAM Bus
       dma_clk_i  : in  std_logic;
@@ -375,10 +375,8 @@ begin
 
 -- phase decoder
    PDET : rx_phase_det
-      generic map (
-         WISHBONE_FREQ => WISHBONE_FREQ)  -- WishBone frequency in MHz
       port map (
-         wb_clk_i       => wb_clk_i,
+         spdif_clk_i    => spdif_clk_i,
          rxen           => conf_rxen,
          spdif          => spdif_rx_i,
          lock           => lock,

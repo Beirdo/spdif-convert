@@ -207,6 +207,7 @@ END COMPONENT;
          evt_hcsbf    : out std_logic;  -- higher ch.st/user data buf empty 
          evt_hsbf     : out std_logic;  -- higher sample buf empty event
          evt_lsbf     : out std_logic;  -- lower sample buf empty event
+         spdif_clk_i  : in  std_logic;
          spdif_tx_o   : out std_logic);
    end component;
    

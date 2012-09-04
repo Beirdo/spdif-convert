@@ -79,9 +79,6 @@ wire      [WB0_MASTERS-1:0] m_wb0_cyc                       ;
 wire      [WB0_MASTERS-1:0] m_wb0_stb                       ;
 wire      [WB0_MASTERS-1:0] m_wb0_ack                       ;
 wire      [WB0_MASTERS-1:0] m_wb0_err                       ;
-wire      [WB0_MASTERS-1:0] m_wb0_rty                       ;
-wire      [1:0]             m_wb0_bte      [WB0_MASTERS-1:0];
-wire      [2:0]             m_wb0_cti      [WB0_MASTERS-1:0];
 
 // Wishbone 0 Slave Buses
 wire      [WB0_AWIDTH-1:0]  s_wb0_adr      [WB0_SLAVES-1:0];
@@ -93,9 +90,6 @@ wire      [WB0_SLAVES-1:0]  s_wb0_cyc                      ;
 wire      [WB0_SLAVES-1:0]  s_wb0_stb                      ;
 wire      [WB0_SLAVES-1:0]  s_wb0_ack                      ;
 wire      [WB0_SLAVES-1:0]  s_wb0_err                      ;
-wire      [WB0_SLAVES-1:0]  s_wb0_rty                      ;
-wire      [1:0]             s_wb0_bte      [WB0_SLAVES-1:0];
-wire      [2:0]             s_wb0_cti      [WB0_SLAVES-1:0];
 
 // Wishbone 1 Master Buses
 wire      [WB1_AWIDTH-1:0]  m_wb1_adr      [WB0_MASTERS-1:0];
@@ -107,9 +101,6 @@ wire      [WB1_MASTERS-1:0] m_wb1_cyc                       ;
 wire      [WB1_MASTERS-1:0] m_wb1_stb                       ;
 wire      [WB1_MASTERS-1:0] m_wb1_ack                       ;
 wire      [WB1_MASTERS-1:0] m_wb1_err                       ;
-wire      [WB1_MASTERS-1:0] m_wb1_rty                       ;
-wire      [1:0]             m_wb1_bte      [WB0_MASTERS-1:0];
-wire      [2:0]             m_wb1_cti      [WB0_MASTERS-1:0];
 
 // Wishbone 1 Slave Buses
 wire      [WB1_AWIDTH-1:0]  s_wb1_adr      [WB0_SLAVES-1:0];
@@ -121,9 +112,6 @@ wire      [WB1_SLAVES-1:0]  s_wb1_cyc                      ;
 wire      [WB1_SLAVES-1:0]  s_wb1_stb                      ;
 wire      [WB1_SLAVES-1:0]  s_wb1_ack                      ;
 wire      [WB1_SLAVES-1:0]  s_wb1_err                      ;
-wire      [WB1_SLAVES-1:0]  s_wb1_rty                      ;
-wire      [1:0]             s_wb1_bte      [WB0_SLAVES-1:0];
-wire      [2:0]             s_wb1_cti      [WB0_SLAVES-1:0];
 
 wire      [DMA_DEVICES-1:0] dma_en;
 wire      [DMA_DEVICES-1:0] dma_we;
@@ -136,7 +124,6 @@ wire      [DMA_DWIDTH-1:0]  dma_dat_r      [DMA_DEVICES-1:0];
 // Interrupts
 // ======================================
 wire      [1:0]             ae_irq;
-wire      [1:0]             ae_irqe;
 
 wire      [ 7:0]            irq_in;
 
@@ -146,11 +133,7 @@ wire                        spi_int;
 wire                        spdif_rx_int;
 wire                        spdif_tx_int;
 wire                        dma_int;
-wire                        wb0m0_exc_be;
-wire                        wb0m0_exc_wdt;
 
-
-assign ae_irqe   = 2'd3;      // Assuming active high interrupt enables
 
 // IRQ0
 assign irq_in[0] = uart0_int;
@@ -158,9 +141,7 @@ assign irq_in[1] = spi_int;
 assign irq_in[2] = spdif_rx_int;
 assign irq_in[3] = spdif_tx_int;
 assign irq_in[4] = dma_int;
-assign irq_in[5] = wb0m0_exc_be;
-assign irq_in[6] = wb0m0_exc_wdt;
-assign irq_in[7] = 1'b0;
+assign irq_in[7:5] = 1'b0;
 
 // ======================================
 // Clocks and Resets Module
@@ -168,10 +149,11 @@ assign irq_in[7] = 1'b0;
 wire rst_in;
 assign rst_in = brd_rst | int_rst;
 
-wire [1:0] spdif_clk_sel;
-wire       spdif_clk;
+wire       spdif_tx_clk_sel;
+wire       spdif_tx_clk;
+wire       spdif_rx_clk;
 
-assign spdif_clk_sel = instr_base[7:6];
+assign spdif_tx_clk_sel = instr_base[7];
 
 clocks_resets u_clocks_resets (
     .i_brd_rst          ( rst_in            ),
@@ -180,18 +162,18 @@ clocks_resets u_clocks_resets (
     .o_sys_rst          ( sys_rst           ),
     .o_sys_clk          ( sys_clk           ),
     .o_uart_clk         ( uart_clk          ),
-    .i_spdif_clk_sel    ( spdif_clk_sel     ),
-    .o_spdif_clk        ( spdif_clk         )
+    .i_spdif_tx_clk_sel ( spdif_tx_clk_sel  ),
+    .o_spdif_tx_clk     ( spdif_tx_clk      ),
+    .o_spdif_rx_clk     ( spdif_rx_clk      )
 );
                 
 
 // -------------------------------------------------------------
-// Instantiate AE18 Processor Core
+// Instantiate 8051 Processor Core
 // -------------------------------------------------------------
 
 wire                  wb0m0_acc_sel;
-wire [WB0_AWIDTH-1:0] wb0m0_acc_adr;
-wire [ 7:0]           wb0m0_acc_dat;
+wire [ 7:0]           wb0m0_acc_dat_r_i;
 wire [ 7:0]           wb0m0_acc_dat_r;
 wire [ 7:0]           wb0m0_acc_dat_w;
 wire                  wb0m0_acc_we_i;
@@ -199,10 +181,8 @@ wire                  wb0m0_acc_we_o;
 wire                  wb0m0_acc_ack_i;
 wire                  wb0m0_acc_ack_o;
 
-wire [WB0_SWIDTH-1:0] wb0m0_mem_sel;
+wire                  wb0m0_mem_sel;
 wire [WB0_AWIDTH-1:0] wb0m0_mem_adr;
-wire [WB0_DWIDTH-1:0] wb0m0_mem_dat;
-wire [WB0_DWIDTH-1:0] wb0m0_mem_dat_r;
 wire [WB0_DWIDTH-1:0] wb0m0_mem_dat_w;
 wire                  wb0m0_mem_we;
 wire                  wb0m0_mem_ack;
@@ -214,38 +194,6 @@ wire                  wb0s_is_8bit;
 
 assign wb0s_is_8bit = s_wb0_stb[0] | s_wb0_stb[1] | s_wb0_stb[2] |
                       s_wb0_stb[4] | s_wb0_stb[5];
-
-//ae18_core #(
-//    .ISIZ ( 16 ),
-//    .DSIZ ( 16 )
-//)
-//u_ae18 (
-//    .wb_clk_o ( wb_clk ),
-//    .wb_rst_o ( wb_rst ),
-//
-//    // Instruction bus
-//    .iwb_adr_o ( m_wb1_adr  [0][14:0] ),
-//    .iwb_dat_i ( m_wb1_dat_r[0] ),
-//    .iwb_dat_o ( m_wb1_dat_w[0] ),
-//    .iwb_stb_o ( m_wb1_stb  [0] ),
-//    .iwb_we_o  ( m_wb1_we   [0] ),
-//    .iwb_ack_i ( m_wb1_ack  [0] ),
-//    .iwb_sel_o ( m_wb1_sel  [0] ),
-//
-//    // Data Bus
-//    .dwb_adr_o     ( wb0m0_acc_adr    ),
-//    .dwb_dat_o     ( wb0m0_acc_dat_w  ),
-//    .dwb_stb_o     ( m_wb0_stb[0]     ),
-//    .dwb_we_o      ( wb0m0_acc_we_i   ),
-//    .dwb_dat_i     ( wb0m0_acc_dat_r  ),
-//    .dwb_ack_i     ( wb0m0_acc_ack_o  ),
-//
-//    // I/O
-//    .int_i  ( ae_irq ),
-//    .inte_i ( ae_irqe ),
-//    .clk_i  ( sys_clk ),
-//    .rst_i  ( sys_rst )
-//);
 
 assign wb_clk = sys_clk;
 assign wb_rst = sys_rst;
@@ -263,7 +211,7 @@ oc8051_top u_8051 (
     .wbi_err_i ( m_wb1_err  [0] ),
 
     // Data Bus
-    .wbd_adr_o ( wb0m0_acc_adr   ),
+    .wbd_adr_o ( m_wb0_adr[0]    ),
     .wbd_dat_o ( wb0m0_acc_dat_w ),
     .wbd_stb_o ( m_wb0_stb[0]    ),
     .wbd_we_o  ( wb0m0_acc_we_i  ),
@@ -278,55 +226,40 @@ oc8051_top u_8051 (
     .ea_in   ( ~instr_base[0] ) // 1 = imem, 0 = bmem
 );
 
-assign m_wb0_cyc[0] = m_wb0_stb[0];
-assign m_wb1_cyc[0] = m_wb1_stb[0];
-
 
 //
-// Memory sizer for AE18 on WB0
+// Memory sizer for AE18 on WB0 - 8 bit master, 32 bit slave
 //
-memory_sizer_dual_path u_wb0m0_sizer (
+memory_sizer u_wb0m0_sizer (
     .clk_i           ( wb_clk ),
     .reset_i         ( wb_rst ),
-    .memory_has_be_i ( 1'b0   ),  // At least the SPI has no BE bits
 
-    .access_width_i ( 3'b001 ),   // AE18 data bus is 8-bit
-    .access_big_endian_i ( 1'b0 ),
+    .master_sel_i   ( wb0m0_acc_sel     ),
+    .master_adr_i   ( m_wb0_adr[0]      ),
+    .master_we_i    ( wb0m0_acc_we_o    ),
+    .master_dat_i   ( wb0m0_acc_dat_w   ),
+    .master_dat_o   ( wb0m0_acc_dat_r_i ),
+    .master_ack_o   ( wb0m0_acc_ack_i   ),
 
-    .sel_i          ( wb0m0_acc_sel ),
-    .adr_i          ( wb0m0_acc_adr ),
-    .we_i           ( wb0m0_acc_we_o ),
-    .dat_io         ( wb0m0_acc_dat ),
-    .access_ack_o   ( wb0m0_acc_ack_i ),
-
-    .memory_width_i ( 3'b100 ),   // All slaves are 32-bit
-
-    .memory_be_o    ( wb0m0_mem_sel ),
-    .memory_adr_o   ( wb0m0_mem_adr ),
-    .memory_we_o    ( wb0m0_mem_we ),
-    .memory_dat_io  ( wb0m0_mem_dat ),
-    .memory_ack_i   ( wb0m0_mem_ack ),
-
-    .exception_be_o ( wb0m0_exc_be ),
-    .exception_watchdog_o ( wb0m0_exc_wdt )
+    .slave_sel_o    ( wb0m0_mem_sel   ),
+    .slave_adr_o    ( wb0m0_mem_adr   ),
+    .slave_we_o     ( wb0m0_mem_we    ),
+    .slave_dat_i    ( m_wb0_dat_r[0]  ),
+    .slave_dat_o    ( wb0m0_mem_dat_w ),
+    .slave_ack_i    ( wb0m0_mem_ack   )
 );
 
-assign wb0m0_acc_we_o  = ~wb0s_is_8bit & wb0m0_acc_we_i;
-assign wb0m0_acc_sel   = ~wb0s_is_8bit & m_wb0_stb[0];
-assign wb0m0_acc_dat_r = ~wb0m0_acc_we_i ?
-                         (wb0s_is_8bit   ? m_wb0_dat_r[0]  : wb0m0_acc_dat) :
-                         8'bZ;
-assign wb0m0_acc_dat   =  wb0m0_acc_we_o ? wb0m0_acc_dat_w : 8'bZ;
-assign wb0m0_acc_ack_o =  wb0s_is_8bit   ? m_wb0_ack[0] : wb0m0_acc_ack_i;
+assign wb0m0_acc_we_o  = ~wb0s_is_8bit   & wb0m0_acc_we_i;
+assign wb0m0_acc_sel   = ~wb0s_is_8bit   & m_wb0_stb[0];
+assign wb0m0_acc_dat_r =  wb0s_is_8bit   ? m_wb0_dat_r[0][7:0] :
+                          wb0m0_acc_dat_r_i;
+assign wb0m0_acc_ack_o =  wb0s_is_8bit   ? m_wb0_ack[0]    : wb0m0_acc_ack_i;
 
-assign wb0m0_mem_dat   = ~wb0m0_mem_we   ? wb0m0_mem_dat_r : 32'bZ;
-assign wb0m0_mem_dat_w =  wb0m0_mem_we   ? wb0m0_mem_dat   : 32'bZ;
-assign wb0m0_mem_dat_r = ~wb0s_is_8bit   ? m_wb0_dat_r[0]  : 32'bZ;
 assign wb0m0_mem_ack   = ~wb0s_is_8bit   & m_wb0_ack[0];
 
 assign m_wb0_dat_w[0]  =  wb0s_is_8bit   ? wb0m0_acc_dat_w : wb0m0_mem_dat_w;
-assign m_wb0_adr[0]    =  wb0s_is_8bit   ? wb0m0_acc_adr   : wb0m0_mem_adr;
-assign m_wb0_sel[0]    =  wb0s_is_8bit   ? m_wb0_stb[0]    : wb0m0_mem_sel;
+assign m_wb0_sel[0]    =  wb0s_is_8bit   ? m_wb0_stb[0]    :
+                          {{4}{wb0m0_mem_sel}};
 assign m_wb0_we[0]     =  wb0s_is_8bit   ? wb0m0_acc_we_i  : wb0m0_mem_we;
 
 // -------------------------------------------------------------
@@ -550,8 +483,7 @@ u_dma (
 rx_spdif #(
     .data_width ( WB0_DWIDTH ),
     .addr_width ( 10 ),  // gives 2kB of buffer
-    .ch_st_capture ( 8 ),
-    .wishbone_freq ( 40 )  // TODO - remove this, feed in 128x bitclock.  Assume a 40MHz wb_clk for now
+    .ch_st_capture ( 8 )
 )
 u_spdif_rx (
     .wb_clk_i ( wb_clk ),
@@ -560,8 +492,8 @@ u_spdif_rx (
     .wb_stb_i ( s_wb0_stb  [7] ),
     .wb_we_i  ( s_wb0_we   [7] ),
     .wb_cyc_i ( s_wb0_cyc  [7] ),
-    .wb_bte_i ( s_wb0_bte  [7] ),
-    .wb_cti_i ( s_wb0_cti  [7] ),
+    .wb_bte_i ( 2'b0           ),
+    .wb_cti_i ( 3'b0           ),
     .wb_adr_i ( s_wb0_adr  [7] ),
     .wb_dat_i ( s_wb0_dat_w[7] ),
     .wb_ack_o ( s_wb0_ack  [7] ),
@@ -569,6 +501,7 @@ u_spdif_rx (
     // Interrupt line
     .rx_int_o ( spdif_rx_int ),
     // SPDIF input signal
+    .spdif_clk_i ( spdif_rx_clk ),
     .spdif_rx_i ( spdif_rx ),
     // DMA Bus
     .dma_clk_i ( wb_clk ),
@@ -596,8 +529,8 @@ u_spdif_tx (
     .wb_stb_i ( s_wb0_stb  [8] ),
     .wb_we_i  ( s_wb0_we   [8] ),
     .wb_cyc_i ( s_wb0_cyc  [8] ),
-    .wb_bte_i ( s_wb0_bte  [8] ),
-    .wb_cti_i ( s_wb0_cti  [8] ),
+    .wb_bte_i ( 2'b0           ),
+    .wb_cti_i ( 3'b0           ),
     .wb_adr_i ( s_wb0_adr  [8] ),
     .wb_dat_i ( s_wb0_dat_w[8] ),
     .wb_ack_o ( s_wb0_ack  [8] ),
@@ -605,6 +538,7 @@ u_spdif_tx (
     // Interrupt line
     .tx_int_o ( spdif_tx_int ),
     // SPDIF input signal
+    .spdif_clk_i ( spdif_tx_clk ),
     .spdif_tx_o ( spdif_tx ),
     // DMA Bus
     .dma_clk_i ( wb_clk ),
@@ -680,6 +614,7 @@ intercon0 u_wb0_arb (
     // wb0m0
     .wb0m0_dat_i ( m_wb0_dat_r[0] ),
     .wb0m0_ack_i ( m_wb0_ack  [0] ),
+    .wb0m0_err_i ( m_wb0_err  [0] ),
     .wb0m0_dat_o ( m_wb0_dat_w[0] ),
     .wb0m0_we_o  ( m_wb0_we   [0] ),
     .wb0m0_sel_o ( m_wb0_sel  [0] ),
@@ -741,8 +676,6 @@ intercon0 u_wb0_arb (
     .wb0s5_we_i  ( s_wb0_we   [5] ),
     .wb0s5_sel_i ( s_wb0_sel  [5] ),
     .wb0s5_adr_i ( s_wb0_adr  [5] ),
-    .wb0s5_cti_i ( s_wb0_cti  [5] ),
-    .wb0s5_bte_i ( s_wb0_bte  [5] ),
     .wb0s5_cyc_i ( s_wb0_cyc  [5] ),
     .wb0s5_stb_i ( s_wb0_stb  [5] ),
     // wb0s6
@@ -761,8 +694,6 @@ intercon0 u_wb0_arb (
     .wb0s7_we_i  ( s_wb0_we   [7] ),
     .wb0s7_sel_i ( s_wb0_sel  [7] ),
     .wb0s7_adr_i ( s_wb0_adr  [7] ),
-    .wb0s7_cti_i ( s_wb0_cti  [7] ),
-    .wb0s7_bte_i ( s_wb0_bte  [7] ),
     .wb0s7_cyc_i ( s_wb0_cyc  [7] ),
     .wb0s7_stb_i ( s_wb0_stb  [7] ),
     // wb0s8
@@ -772,8 +703,6 @@ intercon0 u_wb0_arb (
     .wb0s8_we_i  ( s_wb0_we   [8] ),
     .wb0s8_sel_i ( s_wb0_sel  [8] ),
     .wb0s8_adr_i ( s_wb0_adr  [8] ),
-    .wb0s8_cti_i ( s_wb0_cti  [8] ),
-    .wb0s8_bte_i ( s_wb0_bte  [8] ),
     .wb0s8_cyc_i ( s_wb0_cyc  [8] ),
     .wb0s8_stb_i ( s_wb0_stb  [8] ),
     // clock and reset

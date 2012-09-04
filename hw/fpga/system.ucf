@@ -1,13 +1,13 @@
 
 #Created by Constraints Editor (xc6slx9-tqg144-3) - 2012/08/28
 NET "brd_clk_p" TNM_NET = "brd_clk_p";
-TIMESPEC TS_brd_clk_p = PERIOD "brd_clk_p" 20 ns HIGH 50 %;
+TIMESPEC TS_brd_clk_p = PERIOD "brd_clk_p" 54.253 ns HIGH 50%;
 NET "brd_clk_n" TNM_NET = "brd_clk_n";
 TIMESPEC TS_brd_clk_n = PERIOD "brd_clk_n" TS_brd_clk_p  PHASE 10 ns HIGH 50 %;
 NET "sys_clk" TIG;
 
-# PlanAhead Generated physical constraints 
 
+# PlanAhead Generated physical constraints 
 NET "gpio[0]" LOC = P137;
 NET "gpio[1]" LOC = P138;
 NET "gpio[2]" LOC = P139;
@@ -47,3 +47,6 @@ NET "spi_ss[4]" LOC = P99;
 NET "spi_ss[3]" LOC = P98;
 NET "brd_clk_p" LOC = P56;
 NET "brd_clk_n" LOC = P55;
+#Created by Constraints Editor (xc6slx9-tqg144-3) - 2012/09/04
+NET "u_clocks_resets/int_spdif_44k1_clk" TIG;
+NET "u_clocks_resets/int_spdif_48k_clk" TIG;
