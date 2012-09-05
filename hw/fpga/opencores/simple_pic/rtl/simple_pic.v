@@ -252,7 +252,7 @@ end
 
   always @(posedge clk_i)
   begin
-    if (~rst_i)
+    if (rst_i)
     begin
       for (i=0; i<BANKS; i=i+1)
       begin
@@ -277,7 +277,7 @@ end
   begin
     for (i=0; i<BANKS; i=i+1)
     begin
-      if (~rst_i)
+      if (rst_i)
         pending[i] <= #1 {{REG_WIDTH}{1'b0}};  // clear all pending interrupts
       else if ( wb_wr & (&reg_addr) )
         pending[i] <= #1 (pending[i] & ~dat_i) | irq_event[i];
@@ -303,7 +303,7 @@ end
   // generate ack_o
   reg ack_o;
   always @(posedge clk_i)
-    if (~rst_i)
+    if (rst_i)
       ack_o <= 1'b0;
     else
       ack_o <= #1 wb_acc & !ack_o;

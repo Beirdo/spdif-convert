@@ -192,8 +192,8 @@ wire                  wb0s_is_8bit;
 //assign m_wb1_adr[0][15] = instr_base[0]; // set the top bit from the base reg
 //                                         // 0 = imem, 1 = bmem
 
-assign wb0s_is_8bit = s_wb0_stb[0] | s_wb0_stb[1] | s_wb0_stb[2] |
-                      s_wb0_stb[4] | s_wb0_stb[5];
+assign wb0s_is_8bit = s_wb0_cyc[0] | s_wb0_cyc[1] | s_wb0_cyc[2] |
+                      s_wb0_cyc[4] | s_wb0_cyc[5];
 
 assign wb_clk = sys_clk;
 assign wb_rst = sys_rst;

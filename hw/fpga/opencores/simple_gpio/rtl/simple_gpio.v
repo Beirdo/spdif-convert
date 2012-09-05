@@ -95,11 +95,6 @@ module simple_gpio(
   gpio, ibase, rst_o
 );
 
-  //
-  // Inputs & outputs
-  //
-  parameter io = 8;            // number of GPIOs
-
   // 8bit WISHBONE bus slave interface
   input         clk_i;         // clock
   input         rst_i;         // reset (asynchronous active low)
@@ -112,84 +107,65 @@ module simple_gpio(
   output        ack_o;         // normal bus termination
 
   // GPIO pins
-  inout  [io:1] gpio;
-  output [ 7:0] ibase;
+  inout  [7:0]  gpio;
+  output [7:0]  ibase;
   output        rst_o;
 
   //
   // Module body
   //
-  reg [io:1] ctrl, line;                  // ControlRegister, LineRegister
-  reg [io:1] lgpio, llgpio;               // LatchedGPIO pins
+  reg [7:0] ctrl, line;                  // ControlRegister, LineRegister
+  reg [7:0] lgpio, llgpio;               // LatchedGPIO pins
 
-  reg [ 7:0] instr_base      = 8'h01;     // Instruction base register
-  reg        prev_instr_base = 1'b1;      // Previous Instruction base register
+  reg [7:0] instr_base      = 8'h01;     // Instruction base register
+  reg       prev_instr_base = 1'b1;      // Previous Instruction base register
 
-  //
-  // perform parameter checks
-  //
-  // synopsys translate_off
-  initial
-  begin
-      if(io > 8)
-        $display("simple_gpio: max. 8 GPIOs supported.");
-  end
-  // synopsys translate_on
+  integer reg_num;
 
   //
   // WISHBONE interface
 
-  wire wb_acc = cyc_i & stb_i;            // WISHBONE access
+  wire wb_acc = 1'b1; //cyc_i & stb_i;            // WISHBONE access
   wire wb_wr  = wb_acc & we_i;            // WISHBONE write access
 
   always @(posedge clk_i)
       if (rst_i)
         begin
-            ctrl <= #1 {{io}{1'b0}};
-            line <= #1 {{io}{1'b0}};
+            ctrl <= #1 8'b0;
+            line <= #1 8'b0;
         end
       else if (wb_wr)
          case (adr_i) // synopsys full_case parallel_case
-           2'b00:  ctrl <= #1 dat_i[io-1:0];
-           2'b01:  line <= #1 dat_i[io-1:0];
-           2'b10:  
-             begin
-               prev_instr_base <= #1 instr_base[0];
-               instr_base <= #1 dat_i[7:0];
-             end
+           2'b00:  ctrl       <= #1 dat_i[7:0];
+           2'b01:  line       <= #1 dat_i[7:0];
+           2'b10:  instr_base <= #1 dat_i[7:0];
            2'b11: ;
          endcase
 
-  reg ibase_changed;
   always @(posedge clk_i)
-    if (rst_i)
-      ibase_changed <= #1 1'b0;
-    else
-      ibase_changed <= #1 instr_base[0] ^ prev_instr_base;
+    prev_instr_base <= #1 instr_base[0];
+
+  wire ibase_changed;
+  assign ibase_changed = (instr_base[0] ^ prev_instr_base) & ~rst_i;
+
+  wire [7:0] outregs [3:0];
+
+  always @(adr_i)
+    reg_num = adr_i;
+
+  assign outregs[0] = ctrl;
+  assign outregs[1] = llgpio;
+  assign outregs[2] = instr_base;
+  assign outregs[3] = 8'b0;
 
   reg [7:0] dat_o;
   always @(posedge clk_i)
-    case (adr_i) // synopsys full_case parallel_case
-      2'b00:  dat_o <= #1 { {{8-io}{1'b0}}, ctrl};
-      2'b01:  dat_o <= #1 { {{8-io}{1'b0}}, llgpio};
-      2'b10:  dat_o <= #1 instr_base;
-      2'b11: ;
-    endcase
+    dat_o <= #1 outregs[reg_num]; 
 
-  reg ack_delay;
-  reg ack_o;
-  always @(posedge clk_i)
-    if (rst_i) begin
-      ack_o <= #1 1'b0;
-      ack_delay <= #1 1'b0;
-    end else begin
-      ack_delay <= #1 wb_acc & ~ack_delay;
-      ack_o <= #1 ack_delay;
-    end
-
+  assign ack_o = wb_acc;
 
   reg rst_o;
-  always @ (negedge clk_i)
+  always @ (posedge clk_i)
     if (rst_i)
       rst_o <= #1 1'b0;
     else
@@ -208,11 +184,11 @@ module simple_gpio(
 
   // assign GPIO outputs
   integer n;
-  reg [io:1] igpio; // temporary internal signal
+  reg [7:0] igpio; // temporary internal signal
 
   always @(ctrl or line)
-    for(n=1;n<=io;n=n+1)
-      igpio[n] <= ctrl[n] ? line[n] : 1'bz;
+    for(n=0;n<8;n=n+1)
+      igpio[n] <= #1 ctrl[n] ? line[n] : 1'bz;
 
   assign gpio = igpio;
 
