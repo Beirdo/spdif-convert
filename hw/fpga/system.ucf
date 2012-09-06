@@ -6,8 +6,6 @@ NET "brd_clk_n" TNM_NET = "brd_clk_n";
 TIMESPEC TS_brd_clk_n = PERIOD "brd_clk_n" TS_brd_clk_p  PHASE 10 ns HIGH 50 %;
 NET "sys_clk" TIG;
 
-PIN "u_clocks_resets/u_rst_buf.O" CLOCK_DEDICATED_ROUTE = FALSE;
-
 
 # PlanAhead Generated physical constraints 
 NET "gpio[0]" LOC = P137;

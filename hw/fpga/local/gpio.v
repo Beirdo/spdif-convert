@@ -57,7 +57,7 @@ module gpio(
   output        ack_o;         // normal bus termination
 
   // GPIO pins
-  (* KEEP = "TRUE" *) inout  [7:0]  gpio;
+  inout  [7:0]  gpio;
   output [7:0]  ibase;
   output        rst_o;
 
@@ -126,7 +126,7 @@ module gpio(
 
   // latch GPIO input pins
   always @(posedge clk_i)
-    lgpio <= #1 gpio;
+    lgpio <= #1 igpio;
 
   // latch again (reduce meta-stability risc)
   always @(posedge clk_i)
