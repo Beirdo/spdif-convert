@@ -2,7 +2,7 @@
 --
 -- For defines see wishbone0.defines
 --
--- Generated Mon Sep  3 23:27:11 2012
+-- Generated Wed Sep  5 21:51:58 2012
 --
 -- Wishbone masters:
 --   wb0m0

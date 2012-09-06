@@ -1,53 +1,3 @@
-/////////////////////////////////////////////////////////////////////
-////                                                             ////
-////  OpenCores Simple General Purpose IO core                   ////
-////                                                             ////
-////  Author: Richard Herveille                                  ////
-////          richard@asics.ws                                   ////
-////          www.asics.ws                                       ////
-////                                                             ////
-/////////////////////////////////////////////////////////////////////
-////                                                             ////
-//// Copyright (C) 2002 Richard Herveille                        ////
-////                    richard@asics.ws                         ////
-////                                                             ////
-//// This source file may be used and distributed without        ////
-//// restriction provided that this copyright statement is not   ////
-//// removed from the file and that any derivative work contains ////
-//// the original copyright notice and the associated disclaimer.////
-////                                                             ////
-////     THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY     ////
-//// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED   ////
-//// TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS   ////
-//// FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL THE AUTHOR      ////
-//// OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,         ////
-//// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES    ////
-//// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE   ////
-//// GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR        ////
-//// BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF  ////
-//// LIABILITY, WHETHER IN  CONTRACT, STRICT LIABILITY, OR TORT  ////
-//// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT  ////
-//// OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE         ////
-//// POSSIBILITY OF SUCH DAMAGE.                                 ////
-////                                                             ////
-/////////////////////////////////////////////////////////////////////
-
-//  CVS Log
-//
-//  $Id: simple_gpio.v,v 1.2 2002-12-22 16:10:17 rherveille Exp $
-//
-//  $Date: 2002-12-22 16:10:17 $
-//  $Revision: 1.2 $
-//  $Author: rherveille $
-//  $Locker:  $
-//  $State: Exp $
-//
-// Change History:
-//               $Log: not supported by cvs2svn $
-//
-
-
-
 //
 // Very basic 8bit GPIO core
 //
@@ -90,7 +40,7 @@
 `include "timescale.v"
 // synopsys translate_on
 
-module simple_gpio(
+module gpio(
   clk_i, rst_i, cyc_i, stb_i, adr_i, we_i, dat_i, dat_o, ack_o,
   gpio, ibase, rst_o
 );
@@ -107,25 +57,25 @@ module simple_gpio(
   output        ack_o;         // normal bus termination
 
   // GPIO pins
-  inout  [7:0]  gpio;
+  (* KEEP = "TRUE" *) inout  [7:0]  gpio;
   output [7:0]  ibase;
   output        rst_o;
 
   //
   // Module body
   //
-  reg [7:0] ctrl, line;                  // ControlRegister, LineRegister
-  reg [7:0] lgpio, llgpio;               // LatchedGPIO pins
+  (* KEEP = "TRUE" *) reg [7:0] ctrl, line;     // ControlRegister, LineRegister
+  (* KEEP = "TRUE" *) reg [7:0] lgpio, llgpio;  // LatchedGPIO pins
 
-  reg [7:0] instr_base      = 8'h01;     // Instruction base register
-  reg       prev_instr_base = 1'b1;      // Previous Instruction base register
+  (* KEEP = "TRUE" *) reg [7:0] instr_base      = 8'h01;  // Instr base register
+  (* KEEP = "TRUE" *) reg       prev_instr_base = 1'b1;   // Prev Instr base reg
 
   integer reg_num;
 
   //
   // WISHBONE interface
 
-  wire wb_acc = 1'b1; //cyc_i & stb_i;            // WISHBONE access
+  wire wb_acc = cyc_i & stb_i;            // WISHBONE access
   wire wb_wr  = wb_acc & we_i;            // WISHBONE write access
 
   always @(posedge clk_i)
@@ -135,11 +85,11 @@ module simple_gpio(
             line <= #1 8'b0;
         end
       else if (wb_wr)
-         case (adr_i) // synopsys full_case parallel_case
-           2'b00:  ctrl       <= #1 dat_i[7:0];
-           2'b01:  line       <= #1 dat_i[7:0];
-           2'b10:  instr_base <= #1 dat_i[7:0];
-           2'b11: ;
+         case (reg_num) // synopsys full_case parallel_case
+           0:  ctrl       <= #1 dat_i[7:0];
+           1:  line       <= #1 dat_i[7:0];
+           2:  instr_base <= #1 dat_i[7:0];
+           3: ;
          endcase
 
   always @(posedge clk_i)

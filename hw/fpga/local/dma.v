@@ -125,7 +125,7 @@ module dma_controller
         end
     end
 
-    always @(negedge clk_i)
+    always @(posedge clk_i)
     begin
         if (rst_i)
             wb_dat_o <= 32'b0;
@@ -135,7 +135,7 @@ module dma_controller
 
     assign wb_ack_o = wb_stb_i;
 
-    always @(negedge clk_i)
+    always @(posedge clk_i)
     begin
         if (rst_i)
             start <= 1'b0;
@@ -143,7 +143,7 @@ module dma_controller
             start <= control_reg[2][31];
     end
 
-    always @(negedge clk_i)
+    always @(posedge clk_i)
     begin
         if (rst_i)
             rd_dev_reg <= 2'd0;
@@ -151,7 +151,7 @@ module dma_controller
             rd_dev_reg <= control_reg[0][31:30];
     end
 
-    always @(negedge clk_i)
+    always @(posedge clk_i)
     begin
         if (rst_i)
             wr_dev_reg <= 2'd0;
@@ -159,7 +159,7 @@ module dma_controller
             wr_dev_reg <= control_reg[1][31:30];
     end
 
-    always @(negedge clk_i)
+    always @(posedge clk_i)
     begin
         if (rst_i)
             count_reg <= {{DMA_AWIDTH+1}{1'b0}};
@@ -169,7 +169,7 @@ module dma_controller
             count_reg <= count_reg - 1;
     end
 
-    always @(negedge clk_i)
+    always @(posedge clk_i)
     begin
         if (rst_i)
             rd_adr_reg <= {{DMA_AWIDTH}{1'b0}};
@@ -179,7 +179,7 @@ module dma_controller
             rd_adr_reg <= rd_adr_reg + 1;
     end
 
-    always @(negedge clk_i)
+    always @(posedge clk_i)
     begin
         if (rst_i)
             wr_adr_reg <= {{DMA_AWIDTH}{1'b0}};

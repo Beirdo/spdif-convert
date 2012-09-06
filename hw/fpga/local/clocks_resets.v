@@ -106,11 +106,12 @@ always @(posedge o_sys_clk or posedge rst_tmp)
         // logical left shift by one (pads with 0)
         rst0_sync_r <= rst0_sync_r << 1;
 
-// BUFG u_rst_buf
-//   (.O (o_sys_rst),
-//    .I (rst0));
+BUFG u_rst_buf (
+    .O (o_sys_rst),
+    .I (rst0)
+);
 
-assign o_sys_rst = rst0;
+//assign o_sys_rst = rst0;
 
 endmodule
 

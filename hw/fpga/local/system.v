@@ -250,7 +250,7 @@ memory_sizer u_wb0m0_sizer (
 );
 
 assign wb0m0_acc_we_o  = ~wb0s_is_8bit   & wb0m0_acc_we_i;
-assign wb0m0_acc_sel   = ~wb0s_is_8bit   & m_wb0_stb[0];
+assign wb0m0_acc_sel   = ~wb0s_is_8bit   & m_wb0_stb[0] & m_wb0_cyc[0];
 assign wb0m0_acc_dat_r =  wb0s_is_8bit   ? m_wb0_dat_r[0][7:0] :
                           wb0m0_acc_dat_r_i;
 assign wb0m0_acc_ack_o =  wb0s_is_8bit   ? m_wb0_ack[0]    : wb0m0_acc_ack_i;
@@ -258,7 +258,7 @@ assign wb0m0_acc_ack_o =  wb0s_is_8bit   ? m_wb0_ack[0]    : wb0m0_acc_ack_i;
 assign wb0m0_mem_ack   = ~wb0s_is_8bit   & m_wb0_ack[0];
 
 assign m_wb0_dat_w[0]  =  wb0s_is_8bit   ? wb0m0_acc_dat_w : wb0m0_mem_dat_w;
-assign m_wb0_sel[0]    =  wb0s_is_8bit   ? m_wb0_stb[0]    :
+assign m_wb0_sel[0]    =  wb0s_is_8bit   ? m_wb0_stb[0] & m_wb0_cyc[0] :
                           {{4}{wb0m0_mem_sel}};
 assign m_wb0_we[0]     =  wb0s_is_8bit   ? wb0m0_acc_we_i  : wb0m0_mem_we;
 
@@ -409,20 +409,22 @@ u_simple_pic (
 // Instantiate GPIO controller
 // -------------------------------------------------------------
 
-simple_gpio u_gpio(
+gpio u_gpio (
     .clk_i   ( wb_clk ),
     .rst_i   ( wb_rst ),
     .cyc_i   ( s_wb0_cyc  [5] ),
     .stb_i   ( s_wb0_stb  [5] ),
     .adr_i   ( s_wb0_adr  [5] ),
     .we_i    ( s_wb0_we   [5] ),
-    .dat_i   ( s_wb0_dat_w[5] ),
-    .dat_o   ( s_wb0_dat_r[5] ),
+    .dat_i   ( s_wb0_dat_w[5][7:0] ),
+    .dat_o   ( s_wb0_dat_r[5][7:0] ),
     .ack_o   ( s_wb0_ack  [5] ),
     .gpio    ( gpio ),
     .ibase   ( instr_base ),
     .rst_o   ( int_rst )
 );
+
+assign s_wb0_dat_r[5][31:8] = 24'b0;
 
 
 // -------------------------------------------------------------
